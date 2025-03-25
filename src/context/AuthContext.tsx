@@ -7,7 +7,6 @@ export type User = {
   id: string;
   firstName: string;
   lastName: string;
-  phone: string;
   role: 'admin' | 'user';
 };
 
@@ -18,7 +17,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string, isAdmin?: boolean) => Promise<boolean>;
-  register: (firstName: string, lastName: string, phone: string, password: string) => Promise<boolean>;
+  register: (firstName: string, lastName: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
 };
@@ -80,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: 'admin-1',
             firstName: 'Admin',
             lastName: 'User',
-            phone: '',
             role: 'admin',
           };
           
@@ -97,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Regular user login logic
       // In a real app, this would validate against a database
       const userKey = Object.keys(mockUsers).find(
-        key => mockUsers[key].phone === username
+        key => mockUsers[key].firstName === username
       );
       
       if (userKey && password === 'password') { // Using simple password for demo
@@ -119,27 +117,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Register function
-  const register = async (firstName: string, lastName: string, phone: string, password: string): Promise<boolean> => {
+  const register = async (firstName: string, lastName: string, password: string): Promise<boolean> => {
     setLoading(true);
     
     try {
       // Artificial delay to simulate network request
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Check if phone number is already registered
-      const phoneExists = Object.values(mockUsers).some(user => user.phone === phone);
-      
-      if (phoneExists) {
-        toast.error('Phone number already registered');
-        return false;
-      }
-      
       // Create new user
       const newUser: User = {
         id: `user-${Date.now()}`,
         firstName,
         lastName,
-        phone,
         role: 'user',
       };
       

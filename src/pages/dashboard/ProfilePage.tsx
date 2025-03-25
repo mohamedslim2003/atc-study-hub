@@ -11,27 +11,18 @@ const ProfilePage: React.FC = () => {
   const { user, updateProfile, loading } = useAuth();
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
-  const [phone, setPhone] = useState(user?.phone || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!firstName || !lastName || !phone) {
+    if (!firstName || !lastName) {
       toast.error('Please fill in all fields');
-      return;
-    }
-    
-    // Simple phone number validation
-    const phoneRegex = /^\d{10,15}$/;
-    if (!phoneRegex.test(phone)) {
-      toast.error('Please enter a valid phone number (10-15 digits)');
       return;
     }
     
     await updateProfile({
       firstName,
       lastName,
-      phone,
     });
   };
 
@@ -69,19 +60,6 @@ const ProfilePage: React.FC = () => {
                   onChange={(e) => setLastName(e.target.value)}
                   required
                 />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Your phone number is used to login to your account
-                </p>
               </div>
               
               <Button type="submit" isLoading={loading}>

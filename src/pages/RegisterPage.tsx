@@ -13,7 +13,6 @@ const RegisterPage: React.FC = () => {
   const { register, loading } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -21,7 +20,7 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
     
     // Validate form
-    if (!firstName || !lastName || !phone || !password || !confirmPassword) {
+    if (!firstName || !lastName || !password || !confirmPassword) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -31,15 +30,8 @@ const RegisterPage: React.FC = () => {
       return;
     }
     
-    // Simple phone number validation
-    const phoneRegex = /^\d{10,15}$/;
-    if (!phoneRegex.test(phone)) {
-      toast.error('Please enter a valid phone number (10-15 digits)');
-      return;
-    }
-    
     // Attempt registration
-    const success = await register(firstName, lastName, phone, password);
+    const success = await register(firstName, lastName, password);
     if (success) {
       navigate('/dashboard');
     }
@@ -75,21 +67,6 @@ const RegisterPage: React.FC = () => {
               required
             />
           </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
-          <Input
-            id="phone"
-            type="text"
-            placeholder="Enter your phone number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            Your phone number will be used to login to your account
-          </p>
         </div>
         
         <div className="space-y-2">

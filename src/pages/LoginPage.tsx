@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     
     if (!username || !password) {
-      toast.error('Please enter both phone number and password');
+      toast.error('Please enter both username and password');
       return;
     }
     
@@ -35,11 +35,11 @@ const LoginPage: React.FC = () => {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="username">Phone Number</Label>
+          <Label htmlFor="username">Username</Label>
           <Input
             id="username"
             type="text"
-            placeholder="Enter your phone number"
+            placeholder="Enter your first name"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required

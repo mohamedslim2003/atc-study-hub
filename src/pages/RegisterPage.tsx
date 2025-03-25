@@ -13,6 +13,7 @@ const RegisterPage: React.FC = () => {
   const { register, loading } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -20,7 +21,7 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
     
     // Validate form
-    if (!firstName || !lastName || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -30,8 +31,15 @@ const RegisterPage: React.FC = () => {
       return;
     }
     
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
     // Attempt registration
-    const success = await register(firstName, lastName, password);
+    const success = await register(firstName, lastName, email, password);
     if (success) {
       navigate('/dashboard');
     }
@@ -67,6 +75,18 @@ const RegisterPage: React.FC = () => {
               required
             />
           </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
         
         <div className="space-y-2">

@@ -7,6 +7,7 @@ export type User = {
   id: string;
   firstName: string;
   lastName: string;
+  email: string;
   role: 'admin' | 'user';
 };
 
@@ -17,7 +18,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string, isAdmin?: boolean) => Promise<boolean>;
-  register: (firstName: string, lastName: string, password: string) => Promise<boolean>;
+  register: (firstName: string, lastName: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
 };
@@ -39,7 +40,7 @@ export const useAuth = () => useContext(AuthContext);
 
 // Admin credentials - hardcoded for demonstration
 // In a real application, these would be properly stored in a secure database
-const ADMIN_USERNAME = 'admin';
+const ADMIN_EMAIL = 'admin@atc-lms.com';
 const ADMIN_PASSWORD = 'adminpassword';
 
 // Mock user database - would be replaced with a real database
@@ -65,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Login function
-  const login = async (username: string, password: string, isAdmin: boolean = false): Promise<boolean> => {
+  const login = async (email: string, password: string, isAdmin: boolean = false): Promise<boolean> => {
     setLoading(true);
     
     try {
@@ -74,11 +75,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Admin login logic
       if (isAdmin) {
-        if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
           const adminUser: User = {
             id: 'admin-1',
             firstName: 'Admin',
             lastName: 'User',
+            email: ADMIN_EMAIL,
             role: 'admin',
           };
           
@@ -95,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Regular user login logic
       // In a real app, this would validate against a database
       const userKey = Object.keys(mockUsers).find(
-        key => mockUsers[key].firstName === username
+        key => mockUsers[key].email === email
       );
       
       if (userKey && password === 'password') { // Using simple password for demo
@@ -117,18 +119,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Register function
-  const register = async (firstName: string, lastName: string, password: string): Promise<boolean> => {
+  const register = async (firstName: string, lastName: string, email: string, password: string): Promise<boolean> => {
     setLoading(true);
     
     try {
       // Artificial delay to simulate network request
       await new Promise(resolve => setTimeout(resolve, 800));
       
+      // Check if email is already registered
+      const emailExists = Object.values(mockUsers).some(user => user.email === email);
+      if (emailExists) {
+        toast.error('Email is already registered');
+        return false;
+      }
+      
       // Create new user
       const newUser: User = {
         id: `user-${Date.now()}`,
         firstName,
         lastName,
+        email,
         role: 'user',
       };
       

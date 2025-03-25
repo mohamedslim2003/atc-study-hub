@@ -12,18 +12,18 @@ import { Shield } from 'lucide-react';
 const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, loading } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !password) {
-      toast.error('Please enter both username and password');
+    if (!email || !password) {
+      toast.error('Please enter both email and password');
       return;
     }
     
-    const success = await login(username, password, true);
+    const success = await login(email, password, true);
     if (success) {
       navigate('/admin');
     }
@@ -42,13 +42,13 @@ const AdminLoginPage: React.FC = () => {
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="email">Email</Label>
           <Input
-            id="username"
-            type="text"
-            placeholder="Admin username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="email"
+            type="email"
+            placeholder="Admin email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>

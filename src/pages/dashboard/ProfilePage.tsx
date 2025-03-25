@@ -11,18 +11,27 @@ const ProfilePage: React.FC = () => {
   const { user, updateProfile, loading } = useAuth();
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
+  const [email, setEmail] = useState(user?.email || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!firstName || !lastName) {
+    if (!firstName || !lastName || !email) {
       toast.error('Please fill in all fields');
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
       return;
     }
     
     await updateProfile({
       firstName,
       lastName,
+      email,
     });
   };
 
@@ -58,6 +67,17 @@ const ProfilePage: React.FC = () => {
                   id="lastName"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>

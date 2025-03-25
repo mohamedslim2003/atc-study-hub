@@ -40,7 +40,7 @@ export const useAuth = () => useContext(AuthContext);
 
 // Admin credentials - hardcoded for demonstration
 // In a real application, these would be properly stored in a secure database
-const ADMIN_EMAIL = 'admin@atc-lms.com';
+const ADMIN_EMAIL = 'trbslim35@gmail.com';
 const ADMIN_PASSWORD = 'adminpassword';
 
 // Mock user database - would be replaced with a real database

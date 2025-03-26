@@ -11,6 +11,11 @@ export type User = {
   role: 'admin' | 'user';
 };
 
+// User with password for internal use
+type UserWithPassword = User & {
+  password: string;
+};
+
 // Define our context type
 type AuthContextType = {
   user: User | null;
@@ -44,7 +49,7 @@ const ADMIN_EMAIL = 'trbslim35@gmail.com';
 const ADMIN_PASSWORD = 'adminpassword';
 
 // Mock user database - would be replaced with a real database
-const mockUsers: Record<string, User> = {};
+const mockUsers: Record<string, UserWithPassword> = {};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -95,18 +100,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // Regular user login logic
-      // In a real app, this would validate against a database
+      // Find user by email
       const userKey = Object.keys(mockUsers).find(
-        key => mockUsers[key].email === email
+        key => mockUsers[key].email.toLowerCase() === email.toLowerCase()
       );
       
-      if (userKey && password === 'password') { // Using simple password for demo
-        setUser(mockUsers[userKey]);
-        localStorage.setItem('atc-lms-user', JSON.stringify(mockUsers[userKey]));
-        toast.success('Login successful!');
-        return true;
+      if (userKey) {
+        const foundUser = mockUsers[userKey];
+        // Check password
+        if (foundUser.password === password) {
+          // Don't include password in the user object we store in state
+          const { password: _, ...userWithoutPassword } = foundUser;
+          setUser(userWithoutPassword);
+          localStorage.setItem('atc-lms-user', JSON.stringify(userWithoutPassword));
+          toast.success('Login successful!');
+          return true;
+        } else {
+          toast.error('Invalid password');
+          return false;
+        }
       } else {
-        toast.error('Invalid login credentials');
+        toast.error('User not found');
         return false;
       }
     } catch (error) {
@@ -127,27 +141,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await new Promise(resolve => setTimeout(resolve, 800));
       
       // Check if email is already registered
-      const emailExists = Object.values(mockUsers).some(user => user.email === email);
+      const emailExists = Object.values(mockUsers).some(user => 
+        user.email.toLowerCase() === email.toLowerCase()
+      );
+      
       if (emailExists) {
         toast.error('Email is already registered');
         return false;
       }
       
       // Create new user
-      const newUser: User = {
+      const newUser: UserWithPassword = {
         id: `user-${Date.now()}`,
         firstName,
         lastName,
         email,
         role: 'user',
+        password,
       };
       
       // Add to mock database
       mockUsers[newUser.id] = newUser;
       
+      // Don't include password in the user object we store in state
+      const { password: _, ...userWithoutPassword } = newUser;
+      
       // Auto login after registration
-      setUser(newUser);
-      localStorage.setItem('atc-lms-user', JSON.stringify(newUser));
+      setUser(userWithoutPassword);
+      localStorage.setItem('atc-lms-user', JSON.stringify(userWithoutPassword));
       
       toast.success('Registration successful!');
       return true;
@@ -186,7 +207,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Update in mock database
       if (mockUsers[user.id]) {
-        mockUsers[user.id] = updatedUser;
+        // Preserve the password when updating
+        const currentPassword = mockUsers[user.id].password;
+        mockUsers[user.id] = { ...updatedUser, password: currentPassword };
       }
       
       // Update local storage

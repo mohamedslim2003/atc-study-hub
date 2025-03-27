@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { isEmailRegistered } from '@/utils/userUtils';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +36,12 @@ const RegisterPage: React.FC = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast.error('Please enter a valid email address');
+      return;
+    }
+    
+    // Check if email is already registered
+    if (isEmailRegistered(email)) {
+      toast.error('Email is already registered');
       return;
     }
     
@@ -115,7 +122,7 @@ const RegisterPage: React.FC = () => {
         
         <Button 
           type="submit" 
-          className="w-full" 
+          className="w-full bg-green-500 hover:bg-green-600" 
           isLoading={loading}
         >
           Register

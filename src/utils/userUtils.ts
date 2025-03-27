@@ -22,6 +22,25 @@ export const getUsersCount = (): number => {
   return count;
 };
 
+// Check if an email is already registered
+export const isEmailRegistered = (email: string): boolean => {
+  // Check if email exists in localStorage
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith('user-')) {
+      try {
+        const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
+        if (storedUser.email?.toLowerCase() === email.toLowerCase()) {
+          return true;
+        }
+      } catch (e) {
+        console.error('Error parsing stored user:', e);
+      }
+    }
+  }
+  return false;
+};
+
 // This function allows us to track newly registered users
 export const trackNewUser = (user: User): void => {
   // Store each user in a separate localStorage entry for tracking

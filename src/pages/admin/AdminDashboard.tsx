@@ -1,18 +1,49 @@
 
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { useAuth } from '@/hooks/useAuth';
-import { getUsersCount } from '@/utils/userUtils';
-import { Users, BookOpen, FileText, ClipboardList, BarChart, Award, Settings } from 'lucide-react';
+import { getUsersCount, getAllUsers } from '@/utils/userUtils';
+import { 
+  Users, 
+  BookOpen, 
+  FileText, 
+  ClipboardList, 
+  BarChart, 
+  Award, 
+  Settings,
+  Mail,
+  X
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const [usersCount, setUsersCount] = useState(0);
+  const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false);
+  const [students, setStudents] = useState<any[]>([]);
 
   useEffect(() => {
     // Get the count of registered users
     setUsersCount(getUsersCount());
+    
+    // Get all users for the dialog
+    setStudents(getAllUsers());
   }, []);
 
   return (
@@ -35,7 +66,10 @@ const AdminDashboard: React.FC = () => {
 
       {/* Stats Overview */}
       <div className="grid gap-6 md:grid-cols-4 mb-8">
-        <Card className="bg-gradient-to-br from-primary/80 to-primary text-white">
+        <Card 
+          className="bg-gradient-to-br from-primary/80 to-primary text-white cursor-pointer hover:shadow-md transition-all duration-300"
+          onClick={() => setIsStudentsDialogOpen(true)}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -141,7 +175,13 @@ const AdminDashboard: React.FC = () => {
               <Button className="w-full justify-start" variant="outline" leftIcon={<FileText className="h-4 w-4" />}>
                 Create Test
               </Button>
-              <Button className="w-full justify-start" variant="outline" leftIcon={<Users className="h-4 w-4" />}>
+              <Button 
+                className="w-full justify-start" 
+                variant="outline" 
+                leftIcon={<Users className="h-4 w-4" />}
+                as={Link}
+                to="/admin/students"
+              >
                 Manage Students
               </Button>
               <Button className="w-full justify-start" variant="outline" leftIcon={<Settings className="h-4 w-4" />}>
@@ -168,7 +208,7 @@ const AdminDashboard: React.FC = () => {
               </p>
             </div>
             
-            <div className="border rounded-lg p-4 text-center">
+            <div className="border rounded-lg p-4 text-center cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => setIsStudentsDialogOpen(true)}>
               <div className="mx-auto h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-3">
                 <Users className="h-6 w-6" />
               </div>
@@ -190,6 +230,81 @@ const AdminDashboard: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Students Dialog */}
+      <Dialog open={isStudentsDialogOpen} onOpenChange={setIsStudentsDialogOpen}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Registered Students</DialogTitle>
+            <DialogDescription>
+              View all students registered in the system
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-[60vh] overflow-y-auto mt-4">
+            {students.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]">#</TableHead>
+                    <TableHead>First Name</TableHead>
+                    <TableHead>Last Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="text-right">Test 1</TableHead>
+                    <TableHead className="text-right">Test 2</TableHead>
+                    <TableHead className="text-right">Test 3</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {students.map((student, index) => (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell>{student.firstName}</TableCell>
+                      <TableCell>{student.lastName}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                          {student.email}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{student.grades?.test1 || 'N/A'}</TableCell>
+                      <TableCell className="text-right">{student.grades?.test2 || 'N/A'}</TableCell>
+                      <TableCell className="text-right">{student.grades?.test3 || 'N/A'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8">
+                <div className="mx-auto h-16 w-16 bg-muted rounded-full flex items-center justify-center text-muted-foreground mb-4">
+                  <Users className="h-8 w-8" />
+                </div>
+                <h3 className="text-lg font-medium">No Students Found</h3>
+                <p className="text-muted-foreground mt-1">
+                  There are no registered students in the system yet.
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-between mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsStudentsDialogOpen(false)}
+            >
+              Close
+            </Button>
+            
+            <Button 
+              as={Link} 
+              to="/admin/students"
+              onClick={() => setIsStudentsDialogOpen(false)}
+            >
+              Manage Students
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

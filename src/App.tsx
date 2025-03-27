@@ -16,6 +16,7 @@ import ExercisesPage from "./pages/dashboard/ExercisesPage";
 import TestsPage from "./pages/dashboard/TestsPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import ManageStudentsPage from "./pages/admin/ManageStudentsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,7 @@ const App = () => (
             }>
               <Route index element={<AdminDashboard />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="students" element={<ManageStudentsPage />} />
             </Route>
             
             {/* Catch-all route */}

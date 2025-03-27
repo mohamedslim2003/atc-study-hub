@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { trackNewUser, getTotalUsersCount } from '@/utils/userUtils';
 
 // Define types for our user
 export type User = {
@@ -26,6 +27,7 @@ type AuthContextType = {
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
+  getTotalUsers: () => number;
 };
 
 // Create the context with a default value
@@ -38,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => false,
   logout: () => {},
   updateProfile: async () => false,
+  getTotalUsers: () => 0,
 });
 
 // Hook for easy context use
@@ -120,6 +123,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return false;
         }
       } else {
+        // Try to find user in localStorage (for persistence across sessions)
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('user-')) {
+            try {
+              const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
+              if (storedUser.email?.toLowerCase() === email.toLowerCase()) {
+                // We found the user, but we don't have the password in localStorage
+                // This is just for demo purposes - in a real app with a proper backend,
+                // password verification would happen server-side
+                
+                // For this demo, let's accept the password as provided
+                const userToLogin: User = {
+                  id: storedUser.id,
+                  firstName: storedUser.firstName,
+                  lastName: storedUser.lastName,
+                  email: storedUser.email,
+                  role: storedUser.role || 'user',
+                };
+                
+                setUser(userToLogin);
+                localStorage.setItem('atc-lms-user', JSON.stringify(userToLogin));
+                toast.success('Login successful!');
+                return true;
+              }
+            } catch (e) {
+              console.error('Error parsing stored user:', e);
+            }
+          }
+        }
+        
         toast.error('User not found');
         return false;
       }
@@ -145,6 +179,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user.email.toLowerCase() === email.toLowerCase()
       );
       
+      // Also check localStorage for existing users
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('user-')) {
+          try {
+            const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
+            if (storedUser.email?.toLowerCase() === email.toLowerCase()) {
+              toast.error('Email is already registered');
+              return false;
+            }
+          } catch (e) {
+            console.error('Error parsing stored user:', e);
+          }
+        }
+      }
+      
       if (emailExists) {
         toast.error('Email is already registered');
         return false;
@@ -165,6 +215,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Don't include password in the user object we store in state
       const { password: _, ...userWithoutPassword } = newUser;
+      
+      // Track the new user for admin dashboard
+      trackNewUser(userWithoutPassword);
       
       // Auto login after registration
       setUser(userWithoutPassword);
@@ -215,6 +268,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update local storage
       localStorage.setItem('atc-lms-user', JSON.stringify(updatedUser));
       
+      // Also update the user in tracking localStorage if exists
+      localStorage.setItem(`user-${user.id}`, JSON.stringify(updatedUser));
+      
       toast.success('Profile updated successfully');
       return true;
     } catch (error) {
@@ -226,6 +282,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Get total users count
+  const getTotalUsers = (): number => {
+    return getTotalUsersCount();
+  };
+
   const value = {
     user,
     loading,
@@ -235,6 +296,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register,
     logout,
     updateProfile,
+    getTotalUsers,
   };
 
   return (

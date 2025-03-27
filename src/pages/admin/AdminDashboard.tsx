@@ -3,8 +3,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { BookOpen, Users, ClipboardList, FileText } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { getTotalUsersCount } from '@/utils/userUtils';
 
 const AdminDashboard: React.FC = () => {
+  const { getTotalUsers } = useAuth();
+  const userCount = getTotalUsers();
+
   return (
     <div className="animate-enter">
       <header className="mb-8">
@@ -25,7 +30,7 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-sm font-medium text-muted-foreground">
                   Total Users
                 </p>
-                <h3 className="text-2xl font-bold mt-1">0</h3>
+                <h3 className="text-2xl font-bold mt-1">{userCount}</h3>
               </div>
               <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
                 <Users className="h-6 w-6 text-primary" />

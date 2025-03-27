@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    /* Light mode colors - Changed from blue to green */
+    /* Light mode colors */
     --background: 210 50% 98%;
     --foreground: 220 30% 20%;
 
@@ -15,24 +15,24 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 30% 20%;
 
-    --primary: 142 72% 29%;
+    --primary: 215 75% 25%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 142 30% 92%;
-    --secondary-foreground: 142 72% 29%;
+    --secondary: 215 25% 92%;
+    --secondary-foreground: 215 75% 25%;
 
-    --muted: 142 40% 96.1%;
+    --muted: 210 40% 96.1%;
     --muted-foreground: 220 20% 40%;
 
-    --accent: 142 30% 92%;
-    --accent-foreground: 142 72% 29%;
+    --accent: 210 30% 92%;
+    --accent-foreground: 215 75% 25%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 142 31.8% 91.4%;
-    --input: 142 31.8% 91.4%;
-    --ring: 142 72% 29%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 215 75% 25%;
 
     --radius: 0.75rem;
   }

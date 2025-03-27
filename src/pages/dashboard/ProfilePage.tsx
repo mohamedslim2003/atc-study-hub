@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { User, Mail, Lock, Calendar, Shield } from 'lucide-react';
 
 const ProfilePage: React.FC = () => {
   const { user, updateProfile, loading } = useAuth();
@@ -35,21 +36,41 @@ const ProfilePage: React.FC = () => {
     });
   };
 
+  // Format date in a readable format
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   return (
     <div className="animate-enter">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your account information
-        </p>
+        <div className="flex items-center">
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-4">
+            <User className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your personal information and settings
+            </p>
+          </div>
+        </div>
       </header>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
+          <CardHeader className="border-b">
+            <CardTitle className="flex items-center">
+              <User className="mr-2 h-5 w-5 text-primary" />
+              Personal Information
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
@@ -58,6 +79,7 @@ const ProfilePage: React.FC = () => {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
+                  className="border-input"
                 />
               </div>
               
@@ -68,6 +90,7 @@ const ProfilePage: React.FC = () => {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
+                  className="border-input"
                 />
               </div>
               
@@ -79,53 +102,82 @@ const ProfilePage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="border-input"
                 />
               </div>
               
-              <Button type="submit" isLoading={loading}>
+              <Button type="submit" isLoading={loading} className="w-full">
                 Save Changes
               </Button>
             </form>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">
-                  Account Type
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center">
+                <Shield className="mr-2 h-5 w-5 text-primary" />
+                Account Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Account Type</p>
+                  <div className="flex items-center">
+                    <Shield className="h-4 w-4 mr-2 text-primary" />
+                    <p className="font-medium">{user?.role === 'admin' ? 'Administrator' : 'Student'}</p>
+                  </div>
                 </div>
-                <div className="font-medium">
-                  {user?.role === 'admin' ? 'Administrator' : 'Student'}
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <div className="flex items-center">
+                    <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                    <p className="font-medium">Active</p>
+                  </div>
                 </div>
               </div>
               
-              <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">
-                  Account Status
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">User ID</p>
+                  <p className="font-medium text-sm font-mono">{user?.id || 'N/A'}</p>
                 </div>
-                <div className="font-medium">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Active
-                  </span>
+                
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Joined</p>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <p className="font-medium">{formatDate(new Date())}</p>
+                  </div>
                 </div>
               </div>
-              
-              <div className="pt-4">
-                <div className="text-sm font-medium text-muted-foreground mb-3">
-                  Reset Password
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center">
+                <Lock className="mr-2 h-5 w-5 text-primary" />
+                Security
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Password</p>
+                  <p className="text-sm">Last changed: Never</p>
                 </div>
-                <Button variant="outline">
+                
+                <Button variant="outline" className="w-full" leftIcon={<Lock className="h-4 w-4" />}>
                   Change Password
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

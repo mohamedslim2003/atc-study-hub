@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '@/components/layout/AuthLayout';
@@ -122,7 +121,7 @@ const RegisterPage: React.FC = () => {
         
         <Button 
           type="submit" 
-          className="w-full bg-green-500 hover:bg-green-600" 
+          className="w-full" 
           isLoading={loading}
         >
           Register

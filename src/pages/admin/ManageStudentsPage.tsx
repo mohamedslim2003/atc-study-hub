@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getAllUsers, updateUserGrades, getUserById } from '@/utils/userUtils';
+import { getAllUsers, updateUserGrades, getUserById, debugLocalStorage } from '@/utils/userUtils';
 import { toast } from 'sonner';
 import { User, GraduationCap, Users, Search, ArrowUpDown, Mail, Edit } from 'lucide-react';
 
@@ -48,7 +48,10 @@ const ManageStudentsPage: React.FC = () => {
 
   useEffect(() => {
     // Load all students
+    debugLocalStorage(); // Add debug logging to check localStorage
+    console.log('Loading students...');
     const allUsers = getAllUsers();
+    console.log('Found users:', allUsers);
     setStudents(allUsers);
   }, []);
 

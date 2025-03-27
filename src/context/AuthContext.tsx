@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { trackNewUser, getTotalUsersCount } from '@/utils/userUtils';
+import { trackNewUser, getTotalUsersCount, isEmailRegistered } from '@/utils/userUtils';
 
 // Define types for our user
 export type User = {
@@ -10,6 +9,9 @@ export type User = {
   lastName: string;
   email: string;
   role: 'admin' | 'user';
+  grades?: {
+    [key: string]: number;
+  };
 };
 
 // User with password for internal use
@@ -90,6 +92,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             lastName: 'User',
             email: ADMIN_EMAIL,
             role: 'admin',
+            grades: {
+              test1: 100,
+              test2: 100,
+              test3: 100,
+            }
           };
           
           setUser(adminUser);
@@ -141,6 +148,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   lastName: storedUser.lastName,
                   email: storedUser.email,
                   role: storedUser.role || 'user',
+                  grades: {
+                    test1: 100,
+                    test2: 100,
+                    test3: 100,
+                  }
                 };
                 
                 setUser(userToLogin);
@@ -175,27 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await new Promise(resolve => setTimeout(resolve, 800));
       
       // Check if email is already registered
-      const emailExists = Object.values(mockUsers).some(user => 
-        user.email.toLowerCase() === email.toLowerCase()
-      );
-      
-      // Also check localStorage for existing users
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith('user-')) {
-          try {
-            const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
-            if (storedUser.email?.toLowerCase() === email.toLowerCase()) {
-              toast.error('Email is already registered');
-              return false;
-            }
-          } catch (e) {
-            console.error('Error parsing stored user:', e);
-          }
-        }
-      }
-      
-      if (emailExists) {
+      if (isEmailRegistered(email)) {
         toast.error('Email is already registered');
         return false;
       }
@@ -222,6 +214,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Auto login after registration
       setUser(userWithoutPassword);
       localStorage.setItem('atc-lms-user', JSON.stringify(userWithoutPassword));
+      
+      console.log('Registration successful. User data:', userWithoutPassword);
       
       toast.success('Registration successful!');
       return true;

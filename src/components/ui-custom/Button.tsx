@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { Button as ShadcnButton } from '@/components/ui/button';
 import { Slot } from '@radix-ui/react-slot';
 import { Loader2 } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 // Define button variants using cva
 const buttonVariants = cva(
@@ -40,6 +42,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>,
   isLoading?: boolean;
   asChild?: boolean;
   as?: React.ElementType;
+  to?: string; // Add support for the 'to' prop used by react-router Link
 }
 
 // Create the Button component
@@ -53,9 +56,26 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     isLoading = false, 
     asChild = false,
     as,
+    to,
     children, 
     ...props 
   }, ref) => {
+    // Special case for react-router Link
+    if (as === Link && to) {
+      return (
+        <Link
+          to={to}
+          className={cn(buttonVariants({ variant, size, className }))}
+          onClick={props.onClick}
+        >
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {!isLoading && leftIcon && <span className="mr-2">{leftIcon}</span>}
+          {children}
+          {!isLoading && rightIcon && <span className="ml-2">{rightIcon}</span>}
+        </Link>
+      );
+    }
+    
     // If as prop is provided, use that element type
     if (as) {
       const Component = as;

@@ -15,7 +15,15 @@ export const getUsersCount = (): number => {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key?.startsWith('user-')) {
-      count++;
+      try {
+        const userData = JSON.parse(localStorage.getItem(key) || '{}');
+        // Only count users, not admins
+        if (userData.role !== 'admin') {
+          count++;
+        }
+      } catch (e) {
+        console.error('Error parsing stored user:', e);
+      }
     }
   }
   
@@ -78,6 +86,12 @@ export const isEmailRegistered = (email: string): boolean => {
 
 // This function allows us to track newly registered users
 export const trackNewUser = (user: User): void => {
+  // Check if user already exists in localStorage
+  if (isEmailRegistered(user.email)) {
+    console.log('User already exists, not tracking again');
+    return;
+  }
+
   // Add initial grades for new users
   const userWithGrades = {
     ...user,
@@ -94,6 +108,8 @@ export const trackNewUser = (user: User): void => {
   // Update the total user count
   const currentCount = Number(localStorage.getItem('total-users-count') || '0');
   localStorage.setItem('total-users-count', String(currentCount + 1));
+  
+  console.log('Successfully tracked new user:', user.email);
 };
 
 // Get the total user count
@@ -134,3 +150,19 @@ export const getUserById = (userId: string): User | null => {
   return null;
 };
 
+// Debug function to list all localStorage keys and values
+export const debugLocalStorage = (): void => {
+  console.log('==== LocalStorage Debug ====');
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key) {
+      try {
+        const value = localStorage.getItem(key);
+        console.log(`${key}: ${value}`);
+      } catch (e) {
+        console.error(`Error reading ${key}:`, e);
+      }
+    }
+  }
+  console.log('==== End LocalStorage Debug ====');
+};

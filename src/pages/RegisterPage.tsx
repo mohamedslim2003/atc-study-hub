@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '@/components/layout/AuthLayout';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { isEmailRegistered } from '@/utils/userUtils';
+import { isEmailRegistered, debugLocalStorage } from '@/utils/userUtils';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +39,10 @@ const RegisterPage: React.FC = () => {
       return;
     }
     
+    // Debug check - what's in localStorage before registration
+    console.log('Before registration:');
+    debugLocalStorage();
+    
     // Check if email is already registered
     if (isEmailRegistered(email)) {
       toast.error('Email is already registered');
@@ -46,6 +51,11 @@ const RegisterPage: React.FC = () => {
     
     // Attempt registration
     const success = await register(firstName, lastName, email, password);
+    
+    // Debug check - what's in localStorage after registration
+    console.log('After registration:');
+    debugLocalStorage();
+    
     if (success) {
       navigate('/dashboard');
     }

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { useAuth } from '@/hooks/useAuth';
-import { getUsersCount, getAllUsers } from '@/utils/userUtils';
+import { getUsersCount, getAllUsers, debugLocalStorage } from '@/utils/userUtils';
 import { 
   Users, 
   BookOpen, 
@@ -39,11 +39,18 @@ const AdminDashboard: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
 
   useEffect(() => {
+    // Debug localStorage to see what's in there
+    debugLocalStorage();
+    
     // Get the count of registered users
-    setUsersCount(getUsersCount());
+    const count = getUsersCount();
+    console.log('User count:', count);
+    setUsersCount(count);
     
     // Get all users for the dialog
-    setStudents(getAllUsers());
+    const users = getAllUsers();
+    console.log('Retrieved users:', users);
+    setStudents(users);
   }, []);
 
   return (
@@ -179,8 +186,8 @@ const AdminDashboard: React.FC = () => {
                 className="w-full justify-start" 
                 variant="outline" 
                 leftIcon={<Users className="h-4 w-4" />}
-                as={Link}
                 to="/admin/students"
+                as={Link}
               >
                 Manage Students
               </Button>
@@ -296,8 +303,8 @@ const AdminDashboard: React.FC = () => {
             </Button>
             
             <Button 
-              as={Link} 
               to="/admin/students"
+              as={Link}
               onClick={() => setIsStudentsDialogOpen(false)}
             >
               Manage Students

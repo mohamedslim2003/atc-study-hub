@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardContent } from '@/components/ui-custom/Card';
@@ -8,13 +8,34 @@ import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { getCourseById } from '@/services/courseService';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 const CourseViewPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const [course, setCourse] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
-  const course = courseId ? getCourseById(courseId) : undefined;
+  useEffect(() => {
+    if (courseId) {
+      const foundCourse = getCourseById(courseId);
+      setCourse(foundCourse);
+      setLoading(false);
+      
+      if (!foundCourse) {
+        toast.error('Course not found');
+      }
+    }
+  }, [courseId]);
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <p>Loading course...</p>
+      </div>
+    );
+  }
   
   if (!course) {
     return (
@@ -64,9 +85,13 @@ const CourseViewPage: React.FC = () => {
           
           <h2 className="text-xl font-semibold mb-4">Course Content</h2>
           <div className="prose max-w-none">
-            {course.content.split('\n').map((paragraph, index) => (
-              <p key={index} className="mb-4">{paragraph}</p>
-            ))}
+            {course.content ? (
+              course.content.split('\n').map((paragraph: string, index: number) => (
+                <p key={index} className="mb-4">{paragraph}</p>
+              ))
+            ) : (
+              <p className="text-muted-foreground">No content available for this course.</p>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,6 @@ const CourseForm: React.FC<CourseFormProps> = ({
   isSubmitting = false
 }) => {
   const [file, setFile] = useState<File | null>(null);
-  const [fileContent, setFileContent] = useState<string>('');
 
   const form = useForm<CourseFormData>({
     defaultValues: {
@@ -39,6 +38,17 @@ const CourseForm: React.FC<CourseFormProps> = ({
       content: course?.content || '',
     },
   });
+
+  // Reset form when course changes
+  useEffect(() => {
+    if (course) {
+      form.reset({
+        title: course.title || '',
+        description: course.description || '',
+        content: course.content || '',
+      });
+    }
+  }, [course, form]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -50,7 +60,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
       reader.onload = (event) => {
         if (event.target?.result) {
           const content = event.target.result as string;
-          setFileContent(content);
+          console.log("File content loaded:", content.substring(0, 100) + "...");
           form.setValue('content', content);
         }
       };
@@ -71,6 +81,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
   };
 
   const handleSubmit = (data: CourseFormData) => {
+    console.log("Form submission data:", data);
     if (file) {
       data.file = file;
     }
@@ -123,7 +134,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
               className="max-w-64"
             />
             <p className="text-sm text-muted-foreground">
-              {file ? `File selected: ${file.name}` : 'Upload from your PC'}
+              {file ? `File selected: ${file.name}` : 'Upload from your PC or enter content below'}
             </p>
           </div>
           

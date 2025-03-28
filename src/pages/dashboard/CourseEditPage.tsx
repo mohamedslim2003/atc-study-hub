@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
@@ -14,8 +14,19 @@ const CourseEditPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [course, setCourse] = useState<any>(null);
   
-  const course = courseId ? getCourseById(courseId) : undefined;
+  useEffect(() => {
+    if (courseId) {
+      const foundCourse = getCourseById(courseId);
+      setCourse(foundCourse);
+      
+      if (!foundCourse && !isSubmitting) {
+        toast.error('Course not found');
+        navigate('/dashboard/courses');
+      }
+    }
+  }, [courseId, navigate, isSubmitting]);
   
   // Redirect non-admin users
   if (!isAdmin) {
@@ -27,9 +38,11 @@ const CourseEditPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      if (course) {
+      console.log("Submitting course data:", data);
+      
+      if (courseId) {
         // Update existing course
-        updateCourse(course.id, {
+        updateCourse(courseId, {
           title: data.title,
           description: data.description,
           content: data.content,

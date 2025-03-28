@@ -112,7 +112,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <ShadcnButton
         className={className}
-        variant={variant}
+        variant={variant as "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "primary"}
         size={size}
         ref={ref}
         disabled={isLoading || props.disabled}

@@ -12,6 +12,7 @@ import RegisterPage from "./pages/RegisterPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import CoursesPage from "./pages/dashboard/CoursesPage";
+import CourseEditPage from "./pages/dashboard/CourseEditPage";
 import ExercisesPage from "./pages/dashboard/ExercisesPage";
 import TestsPage from "./pages/dashboard/TestsPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
@@ -77,6 +78,8 @@ const App = () => (
             }>
               <Route index element={<DashboardHome />} />
               <Route path="courses" element={<CoursesPage />} />
+              <Route path="courses/create" element={<CourseEditPage />} />
+              <Route path="courses/edit/:courseId" element={<CourseEditPage />} />
               <Route path="exercises" element={<ExercisesPage />} />
               <Route path="tests" element={<TestsPage />} />
               <Route path="profile" element={<ProfilePage />} />
@@ -91,6 +94,9 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="students" element={<ManageStudentsPage />} />
+              <Route path="courses" element={<CoursesPage />} />
+              <Route path="courses/create" element={<CourseEditPage />} />
+              <Route path="courses/edit/:courseId" element={<CourseEditPage />} />
             </Route>
             
             {/* Catch-all route */}

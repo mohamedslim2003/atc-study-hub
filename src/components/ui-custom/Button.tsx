@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button as ShadcnButton } from '@/components/ui/button';
 import { Slot } from '@radix-ui/react-slot';
@@ -19,6 +18,8 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Add primary as a valid variant (same as default)
+        primary: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -66,7 +67,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         <Link
           to={to}
           className={cn(buttonVariants({ variant, size, className }))}
-          onClick={props.onClick}
         >
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {!isLoading && leftIcon && <span className="mr-2">{leftIcon}</span>}

@@ -109,10 +109,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
 
     // Otherwise, return a regular button with the specified props
+    // Map 'primary' variant to 'default' for ShadcnButton
+    const shadcnVariant = variant === 'primary' ? 'default' : variant;
+    
     return (
       <ShadcnButton
         className={className}
-        variant={variant as "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "primary"}
+        variant={shadcnVariant as "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"}
         size={size}
         ref={ref}
         disabled={isLoading || props.disabled}

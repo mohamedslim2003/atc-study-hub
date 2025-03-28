@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,6 +37,7 @@ const AdminDashboard: React.FC = () => {
   const [usersCount, setUsersCount] = useState(0);
   const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Debug localStorage to see what's in there
@@ -173,7 +174,12 @@ const AdminDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Button className="w-full justify-start" variant="outline" leftIcon={<BookOpen className="h-4 w-4" />}>
+              <Button 
+                className="w-full justify-start" 
+                variant="outline" 
+                leftIcon={<BookOpen className="h-4 w-4" />}
+                onClick={() => navigate('/admin/courses/create')}
+              >
                 Add New Course
               </Button>
               <Button className="w-full justify-start" variant="outline" leftIcon={<ClipboardList className="h-4 w-4" />}>

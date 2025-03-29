@@ -1,69 +1,56 @@
-# Welcome to your Lovable project
 
-## Project info
+# ATC Study Hub
 
-**URL**: https://lovable.dev/projects/09e9d5c8-e2a8-4bf5-9b76-5cfe8dcf41fb
+## Project Overview
 
-## How can I edit this code?
+ATC Study Hub is a comprehensive learning management system designed specifically for Air Traffic Control students. This platform provides access to courses, exercises, and tests to help students master the concepts and skills needed for ATC certification.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- User Authentication: Separate login systems for students and administrators
+- Course Management: Browse, view, and (for admins) create/edit courses
+- Exercise System: Practice ATC concepts with interactive exercises
+- Testing Platform: Assess knowledge with comprehensive tests
+- User Profiles: Track progress and manage personal information
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/09e9d5c8-e2a8-4bf5-9b76-5cfe8dcf41fb) and start prompting.
+## Technologies Used
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
 - React
-- shadcn-ui
 - Tailwind CSS
+- shadcn/ui components
 
-## How can I deploy this project?
+## Getting Started
 
-Simply open [Lovable](https://lovable.dev/projects/09e9d5c8-e2a8-4bf5-9b76-5cfe8dcf41fb) and click on Share -> Publish.
+To run this project locally:
 
-## I want to use a custom domain - is that possible?
+```sh
+# Clone the repository
+git clone <YOUR_REPO_URL>
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+# Navigate to the project directory
+cd atc-study-hub
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+## Project Structure
+
+- `/src/components`: Reusable UI components
+- `/src/pages`: Page components for different routes
+- `/src/context`: Global state management
+- `/src/hooks`: Custom React hooks
+- `/src/services`: API service functions
+- `/src/utils`: Utility functions
+- `/src/types`: TypeScript type definitions
+
+## Deployment
+
+The application can be deployed to any static hosting service that supports single-page applications (SPAs).

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui-custom/Button';
 import { Card, CardContent } from '@/components/ui-custom/Card';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Shield, LogIn, UserPlus } from 'lucide-react';
+import { Shield, LogIn, UserPlus, PlaneLanding } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ const Index = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center z-0" 
         style={{ 
-          backgroundImage: 'url("https://images.unsplash.com/photo-1431576901776-e539bd916ba2?auto=format&fit=crop&q=80")',
+          backgroundImage: 'url("https://images.unsplash.com/photo-1530333821974-f9fcfd640f17?ixlib=rb-4.0.3&auto=format&fit=crop&q=80")',
           backgroundBlendMode: 'overlay',
           backgroundColor: 'rgba(255, 255, 255, 0.85)',
         }}

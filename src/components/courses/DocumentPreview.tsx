@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui-custom/Card';
 
@@ -65,8 +65,22 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
     fileType === 'application/msword'
   ) {
-    // Using Google Docs Viewer as a fallback for Word documents
-    const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileData)}&embedded=true`;
+    // For Word documents, use Microsoft's Office Online viewer or Google Docs viewer
+    // Note: This requires the document to be publicly accessible via a URL
+    
+    // Attempt to use Office Online viewer first
+    // Need to ensure the fileData is a URL and not a base64 string for this to work
+    const isDataUrl = fileData.startsWith('data:');
+    let viewerUrl;
+    
+    if (isDataUrl) {
+      // If it's a data URL, we need to convert it to a Blob for download
+      // But for preview we can use Google Docs viewer as fallback
+      viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(window.location.href)}&wdStartOn=1`;
+    } else {
+      // If it's already a URL, use it directly
+      viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileData)}&wdStartOn=1`;
+    }
     
     return (
       <div className="relative">
@@ -80,7 +94,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         )}
         
         <iframe
-          src={googleDocsViewerUrl}
+          src={viewerUrl}
           className="w-full h-[600px] border-0 rounded-md"
           onLoad={handleIframeLoad}
           onError={handleIframeError}
@@ -92,7 +106,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             <div className="flex items-center">
               <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
               <p className="text-sm">
-                {error} - Word documents may not preview correctly. You can download the file to view it locally.
+                {error} - Word documents may not preview correctly in the browser. Please download the file to view it locally.
               </p>
             </div>
           </Card>

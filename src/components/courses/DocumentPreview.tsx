@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { FileText, AlertTriangle } from 'lucide-react';
+import { FileText, AlertTriangle, FileIcon, Download } from 'lucide-react';
 import { Card } from '@/components/ui-custom/Card';
+import { Button } from '@/components/ui-custom/Button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 interface DocumentPreviewProps {
   fileData: string;
@@ -16,7 +18,8 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [showWordPreviewDialog, setShowWordPreviewDialog] = useState(false);
+  
   // Helper to handle iframe load events
   const handleIframeLoad = () => {
     setIsLoading(false);
@@ -26,6 +29,30 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const handleIframeError = () => {
     setIsLoading(false);
     setError('Failed to load document preview');
+  };
+
+  // Function to trigger download of document
+  const handleDownloadDocument = () => {
+    // Create a download link for the document
+    const link = document.createElement('a');
+    link.href = fileData;
+    
+    // Set the filename with appropriate extension
+    let fileExtension = 'txt';
+    if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      fileExtension = 'docx';
+    } else if (fileType === 'application/msword') {
+      fileExtension = 'doc';
+    } else if (fileType === 'application/pdf') {
+      fileExtension = 'pdf';
+    }
+    
+    link.download = fileName || `document.${fileExtension}`;
+    
+    // Trigger the download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // For text files, display content directly
@@ -60,58 +87,73 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     );
   }
 
-  // For Word documents (docx, doc)
+  // For Word documents (docx, doc) - we'll show a preview overlay instead of trying to embed
+  // since Office Online viewer requires publicly accessible URLs
   if (
     fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
     fileType === 'application/msword'
   ) {
-    // For Word documents, use Microsoft's Office Online viewer or Google Docs viewer
-    // Note: This requires the document to be publicly accessible via a URL
-    
-    // Attempt to use Office Online viewer first
-    // Need to ensure the fileData is a URL and not a base64 string for this to work
-    const isDataUrl = fileData.startsWith('data:');
-    let viewerUrl;
-    
-    if (isDataUrl) {
-      // If it's a data URL, we need to convert it to a Blob for download
-      // But for preview we can use Google Docs viewer as fallback
-      viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(window.location.href)}&wdStartOn=1`;
-    } else {
-      // If it's already a URL, use it directly
-      viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileData)}&wdStartOn=1`;
-    }
+    // Create a more user-friendly message instead of attempting to embed
+    const fileTypeDisplay = fileType.includes('openxmlformats') ? 'Word Document (.docx)' : 'Word Document (.doc)';
     
     return (
-      <div className="relative">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
-            <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-2"></div>
-              <p>Loading document...</p>
+      <>
+        <div className="bg-white rounded-md shadow p-6">
+          <div className="flex flex-col items-center text-center mb-6">
+            <FileText className="h-16 w-16 text-primary mb-4" />
+            <h3 className="text-xl font-medium mb-2">{fileName || 'Document'}</h3>
+            <p className="text-muted-foreground mb-2">{fileTypeDisplay}</p>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md">
+              Word documents cannot be displayed directly in the browser. Please use one of the options below to view the document.
+            </p>
+            
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowWordPreviewDialog(true)}
+                leftIcon={<FileIcon className="h-4 w-4" />}
+              >
+                View Document Information
+              </Button>
+              
+              <Button
+                onClick={handleDownloadDocument}
+                leftIcon={<Download className="h-4 w-4" />}
+              >
+                Download for Viewing
+              </Button>
             </div>
           </div>
-        )}
+        </div>
         
-        <iframe
-          src={viewerUrl}
-          className="w-full h-[600px] border-0 rounded-md"
-          onLoad={handleIframeLoad}
-          onError={handleIframeError}
-          title={fileName}
-        />
-        
-        {error && (
-          <Card className="mt-4 p-4 bg-yellow-50 border-yellow-200">
-            <div className="flex items-center">
-              <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
-              <p className="text-sm">
-                {error} - Word documents may not preview correctly in the browser. Please download the file to view it locally.
-              </p>
+        {/* Dialog with document information */}
+        <Dialog open={showWordPreviewDialog} onOpenChange={setShowWordPreviewDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogTitle>{fileName || 'Document'}</DialogTitle>
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <FileText className="h-10 w-10 text-primary mr-4 mt-1" />
+                <div>
+                  <h4 className="font-medium mb-1">Document Details</h4>
+                  <p className="text-sm text-muted-foreground mb-2">Type: {fileTypeDisplay}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Microsoft Word documents require Microsoft Word or another compatible application to view. 
+                    Please download the file to view its contents.
+                  </p>
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full" 
+                onClick={handleDownloadDocument}
+                leftIcon={<Download className="h-4 w-4" />}
+              >
+                Download Document
+              </Button>
             </div>
-          </Card>
-        )}
-      </div>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 

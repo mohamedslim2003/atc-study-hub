@@ -40,21 +40,28 @@ const CourseEditPage: React.FC = () => {
     try {
       console.log("Submitting course data:", data);
       
+      const courseData: any = {
+        title: data.title,
+        description: data.description,
+        content: data.content,
+      };
+      
+      // Add file data if present
+      if (data.fileData) {
+        courseData.fileData = data.fileData;
+        courseData.fileType = data.fileType;
+        if (data.file) {
+          courseData.fileName = data.file.name;
+        }
+      }
+      
       if (courseId) {
         // Update existing course
-        updateCourse(courseId, {
-          title: data.title,
-          description: data.description,
-          content: data.content,
-        });
+        updateCourse(courseId, courseData);
         toast.success('Course updated successfully');
       } else {
         // Create new course
-        addCourse({
-          title: data.title,
-          description: data.description,
-          content: data.content,
-        });
+        addCourse(courseData);
         toast.success('Course created successfully');
       }
       navigate('/dashboard/courses');

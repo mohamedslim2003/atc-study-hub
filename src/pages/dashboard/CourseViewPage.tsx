@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardContent } from '@/components/ui-custom/Card';
-import { ArrowLeft, BookOpen, Clock } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Download, Eye } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { getCourseById } from '@/services/courseService';
@@ -48,6 +48,42 @@ const CourseViewPage: React.FC = () => {
     );
   }
 
+  const handleDownloadDocument = () => {
+    if (course.fileData && course.fileType) {
+      // Create a download link for the document
+      const link = document.createElement('a');
+      
+      // Set up the download based on file type
+      if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        // For DOCX files, use the base64 data
+        link.href = course.fileData;
+      } else {
+        // For text files, create a blob
+        const blob = new Blob([course.fileData], { type: 'text/plain' });
+        link.href = URL.createObjectURL(blob);
+      }
+      
+      // Set the filename
+      link.download = course.fileName || `${course.title.replace(/\s+/g, '-').toLowerCase()}.${course.fileType.includes('docx') ? 'docx' : 'txt'}`;
+      
+      // Trigger the download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      toast.error('No document available for download');
+    }
+  };
+
+  const handlePreviewDocument = () => {
+    if (course.fileData && course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      // Open the document in a new tab
+      window.open(course.fileData, '_blank');
+    } else {
+      toast.error('No document available for preview');
+    }
+  };
+
   return (
     <div className="animate-enter">
       <div className="flex items-center mb-4">
@@ -84,15 +120,43 @@ const CourseViewPage: React.FC = () => {
           <Separator className="my-6" />
           
           <h2 className="text-xl font-semibold mb-4">Course Content</h2>
-          <div className="prose max-w-none">
-            {course.content ? (
-              course.content.split('\n').map((paragraph: string, index: number) => (
-                <p key={index} className="mb-4">{paragraph}</p>
-              ))
-            ) : (
-              <p className="text-muted-foreground">No content available for this course.</p>
-            )}
-          </div>
+          
+          {course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? (
+            <div className="bg-muted/30 rounded-md p-6 flex flex-col items-center justify-center">
+              <div className="mb-4 text-center">
+                <BookOpen className="h-12 w-12 text-primary mx-auto mb-3" />
+                <h3 className="text-lg font-medium">{course.fileName || 'Document'}</h3>
+                <p className="text-sm text-muted-foreground">Word Document</p>
+              </div>
+              
+              <div className="flex flex-wrap gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={handlePreviewDocument}
+                  leftIcon={<Eye className="h-4 w-4" />}
+                >
+                  Preview Document
+                </Button>
+                
+                <Button
+                  onClick={handleDownloadDocument}
+                  leftIcon={<Download className="h-4 w-4" />}
+                >
+                  Download
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="prose max-w-none">
+              {course.content ? (
+                course.content.split('\n').map((paragraph: string, index: number) => (
+                  <p key={index} className="mb-4">{paragraph}</p>
+                ))
+              ) : (
+                <p className="text-muted-foreground">No content available for this course.</p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

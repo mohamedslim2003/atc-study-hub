@@ -5,6 +5,9 @@ export interface Course {
   description: string;
   content: string;
   imageUrl?: string;
+  fileData?: string;
+  fileType?: string;
+  fileName?: string;
   createdAt: Date;
   updatedAt: Date;
 }

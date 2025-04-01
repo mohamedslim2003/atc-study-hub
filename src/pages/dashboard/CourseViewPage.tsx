@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardContent } from '@/components/ui-custom/Card';
-import { ArrowLeft, BookOpen, Clock, Download, Eye, FileText, FileType } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Download, Eye, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { getCourseById } from '@/services/courseService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import DocumentPreview from '@/components/courses/DocumentPreview';
 
 const CourseViewPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -16,6 +17,7 @@ const CourseViewPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
   
   useEffect(() => {
     if (courseId) {
@@ -88,16 +90,8 @@ const CourseViewPage: React.FC = () => {
     }
   };
 
-  const handlePreviewDocument = () => {
-    if (course.fileData && 
-      (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-       course.fileType === 'application/msword' ||
-       course.fileType === 'application/pdf')) {
-      // Open the document in a new tab
-      window.open(course.fileData, '_blank');
-    } else {
-      toast.error('No document available for preview');
-    }
+  const togglePreview = () => {
+    setShowPreview(!showPreview);
   };
 
   // Helper function to get appropriate icon and label for different file types
@@ -152,29 +146,41 @@ const CourseViewPage: React.FC = () => {
           {(course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
             course.fileType === 'application/msword' ||
             course.fileType === 'application/pdf') ? (
-            <div className="bg-muted/30 rounded-md p-6 flex flex-col items-center justify-center">
-              <div className="mb-4 text-center">
-                {getFileTypeInfo().icon}
-                <h3 className="text-lg font-medium">{course.fileName || 'Document'}</h3>
-                <p className="text-sm text-muted-foreground">{getFileTypeInfo().label}</p>
+            <div>
+              <div className="bg-muted/30 rounded-md p-6 flex flex-col items-center justify-center mb-6">
+                <div className="mb-4 text-center">
+                  {getFileTypeInfo().icon}
+                  <h3 className="text-lg font-medium">{course.fileName || 'Document'}</h3>
+                  <p className="text-sm text-muted-foreground">{getFileTypeInfo().label}</p>
+                </div>
+                
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={togglePreview}
+                    leftIcon={<Eye className="h-4 w-4" />}
+                  >
+                    {showPreview ? 'Hide Preview' : 'Show Preview'}
+                  </Button>
+                  
+                  <Button
+                    onClick={handleDownloadDocument}
+                    leftIcon={<Download className="h-4 w-4" />}
+                  >
+                    Download
+                  </Button>
+                </div>
               </div>
               
-              <div className="flex flex-wrap gap-3 justify-center">
-                <Button
-                  variant="outline"
-                  onClick={handlePreviewDocument}
-                  leftIcon={<Eye className="h-4 w-4" />}
-                >
-                  Preview Document
-                </Button>
-                
-                <Button
-                  onClick={handleDownloadDocument}
-                  leftIcon={<Download className="h-4 w-4" />}
-                >
-                  Download
-                </Button>
-              </div>
+              {showPreview && (
+                <div className="mt-6 bg-white rounded-md shadow">
+                  <DocumentPreview 
+                    fileData={course.fileData} 
+                    fileType={course.fileType}
+                    fileName={course.fileName}
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <div className="prose max-w-none">

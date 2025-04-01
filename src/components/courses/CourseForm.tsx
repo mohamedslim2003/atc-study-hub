@@ -57,8 +57,12 @@ const CourseForm: React.FC<CourseFormProps> = ({
       if (course.fileData && course.fileType) {
         setFileType(course.fileType);
         
-        if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-          setPreviewUrl(null); // Can't preview DOCX directly, but we know it exists
+        if (
+          course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          course.fileType === 'application/msword' ||
+          course.fileType === 'application/pdf'
+        ) {
+          setPreviewUrl(null); // Can't preview directly, but we know it exists
         } else {
           // For other file types that can be previewed
           setPreviewUrl(course.fileData);
@@ -78,8 +82,12 @@ const CourseForm: React.FC<CourseFormProps> = ({
       
       reader.onload = (event) => {
         if (event.target?.result) {
-          if (selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-            // For docx, we'll store the raw data but can't preview directly
+          if (
+            selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+            selectedFile.type === 'application/msword' ||
+            selectedFile.type === 'application/pdf'
+          ) {
+            // For docx, doc, pdf we'll store the raw data but can't preview directly
             const base64Data = event.target.result.toString();
             form.setValue('fileData', base64Data);
             form.setValue('fileType', selectedFile.type);
@@ -103,12 +111,16 @@ const CourseForm: React.FC<CourseFormProps> = ({
         toast.error("Failed to read file");
       };
       
-      if (selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      if (
+        selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        selectedFile.type === 'application/msword' ||
+        selectedFile.type === 'application/pdf'
+      ) {
         reader.readAsDataURL(selectedFile);
       } else if (selectedFile.type === 'text/plain') {
         reader.readAsText(selectedFile);
       } else {
-        toast.error("Please upload a text or Word document");
+        toast.error("Please upload a text, Word document, or PDF file");
         setFile(null);
         setFileType(null);
       }
@@ -116,10 +128,16 @@ const CourseForm: React.FC<CourseFormProps> = ({
   };
 
   const handlePreview = () => {
-    if (file && file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      // Create a temporary link to open the file
-      const url = URL.createObjectURL(file);
-      window.open(url, '_blank');
+    if (file) {
+      if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.type === 'application/msword' ||
+        file.type === 'application/pdf'
+      ) {
+        // Create a temporary link to open the file
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
+      }
     } else {
       toast.error("No valid file to preview");
     }
@@ -177,15 +195,19 @@ const CourseForm: React.FC<CourseFormProps> = ({
                 id="file" 
                 type="file" 
                 onChange={handleFileChange}
-                accept=".txt,.docx"
+                accept=".txt,.docx,.doc,.pdf"
                 className="max-w-64"
               />
               <p className="text-sm text-muted-foreground">
-                {file ? `File selected: ${file.name}` : 'Upload a .txt or .docx file'}
+                {file ? `File selected: ${file.name}` : 'Upload a .txt, .docx, .doc or .pdf file'}
               </p>
             </div>
             
-            {(file || (course?.fileData && course?.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) && (
+            {(file || (course?.fileData && (
+              course?.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+              course?.fileType === 'application/msword' ||
+              course?.fileType === 'application/pdf'
+            ))) && (
               <Button 
                 type="button" 
                 variant="outline" 
@@ -220,10 +242,14 @@ const CourseForm: React.FC<CourseFormProps> = ({
             </div>
           )}
           
-          {fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' && (
+          {(fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+            fileType === 'application/msword' ||
+            fileType === 'application/pdf') && (
             <Card className="p-4 mt-4 bg-muted/50">
               <p className="text-center text-muted-foreground">
-                DOCX file content will be saved and can be previewed by clicking the Preview Document button.
+                {fileType === 'application/pdf' 
+                  ? 'PDF file content will be saved and can be previewed by clicking the Preview Document button.'
+                  : 'Word document content will be saved and can be previewed by clicking the Preview Document button.'}
               </p>
             </Card>
           )}

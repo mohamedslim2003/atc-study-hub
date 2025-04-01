@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardContent } from '@/components/ui-custom/Card';
-import { ArrowLeft, BookOpen, Clock, Download, Eye } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Download, Eye, FileText, FileType } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { getCourseById } from '@/services/courseService';
@@ -54,8 +54,12 @@ const CourseViewPage: React.FC = () => {
       const link = document.createElement('a');
       
       // Set up the download based on file type
-      if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        // For DOCX files, use the base64 data
+      if (
+        course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        course.fileType === 'application/msword' ||
+        course.fileType === 'application/pdf'
+      ) {
+        // For DOCX/DOC/PDF files, use the base64 data
         link.href = course.fileData;
       } else {
         // For text files, create a blob
@@ -63,8 +67,17 @@ const CourseViewPage: React.FC = () => {
         link.href = URL.createObjectURL(blob);
       }
       
-      // Set the filename
-      link.download = course.fileName || `${course.title.replace(/\s+/g, '-').toLowerCase()}.${course.fileType.includes('docx') ? 'docx' : 'txt'}`;
+      // Set the filename with appropriate extension
+      let fileExtension = 'txt';
+      if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        fileExtension = 'docx';
+      } else if (course.fileType === 'application/msword') {
+        fileExtension = 'doc';
+      } else if (course.fileType === 'application/pdf') {
+        fileExtension = 'pdf';
+      }
+      
+      link.download = course.fileName || `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
       
       // Trigger the download
       document.body.appendChild(link);
@@ -76,12 +89,27 @@ const CourseViewPage: React.FC = () => {
   };
 
   const handlePreviewDocument = () => {
-    if (course.fileData && course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    if (course.fileData && 
+      (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+       course.fileType === 'application/msword' ||
+       course.fileType === 'application/pdf')) {
       // Open the document in a new tab
       window.open(course.fileData, '_blank');
     } else {
       toast.error('No document available for preview');
     }
+  };
+
+  // Helper function to get appropriate icon and label for different file types
+  const getFileTypeInfo = () => {
+    if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      return { icon: <FileText className="h-12 w-12 text-primary mx-auto mb-3" />, label: 'Word Document (.docx)' };
+    } else if (course.fileType === 'application/msword') {
+      return { icon: <FileText className="h-12 w-12 text-primary mx-auto mb-3" />, label: 'Word Document (.doc)' };
+    } else if (course.fileType === 'application/pdf') {
+      return { icon: <FileText className="h-12 w-12 text-primary mx-auto mb-3" />, label: 'PDF Document' };
+    }
+    return { icon: <BookOpen className="h-12 w-12 text-primary mx-auto mb-3" />, label: 'Document' };
   };
 
   return (
@@ -121,12 +149,14 @@ const CourseViewPage: React.FC = () => {
           
           <h2 className="text-xl font-semibold mb-4">Course Content</h2>
           
-          {course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? (
+          {(course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+            course.fileType === 'application/msword' ||
+            course.fileType === 'application/pdf') ? (
             <div className="bg-muted/30 rounded-md p-6 flex flex-col items-center justify-center">
               <div className="mb-4 text-center">
-                <BookOpen className="h-12 w-12 text-primary mx-auto mb-3" />
+                {getFileTypeInfo().icon}
                 <h3 className="text-lg font-medium">{course.fileName || 'Document'}</h3>
-                <p className="text-sm text-muted-foreground">Word Document</p>
+                <p className="text-sm text-muted-foreground">{getFileTypeInfo().label}</p>
               </div>
               
               <div className="flex flex-wrap gap-3 justify-center">

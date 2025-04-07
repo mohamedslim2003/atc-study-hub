@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
@@ -61,51 +62,53 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner position="top-right" />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/admin-login" element={<AdminLoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            
-            {/* Protected user routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<DashboardHome />} />
-              <Route path="courses" element={<CoursesPage />} />
-              <Route path="courses/:courseId" element={<CourseViewPage />} />
-              <Route path="courses/create" element={<CourseEditPage />} />
-              <Route path="courses/edit/:courseId" element={<CourseEditPage />} />
-              <Route path="exercises" element={<ExercisesPage />} />
-              <Route path="tests" element={<TestsPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-            </Route>
-            
-            {/* Protected admin routes */}
-            <Route path="/admin" element={
-              <AdminRoute>
-                <DashboardLayout />
-              </AdminRoute>
-            }>
-              <Route index element={<AdminDashboard />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="students" element={<ManageStudentsPage />} />
-              <Route path="courses" element={<CoursesPage />} />
-              <Route path="courses/:courseId" element={<CourseViewPage />} />
-              <Route path="courses/create" element={<CourseEditPage />} />
-              <Route path="courses/edit/:courseId" element={<CourseEditPage />} />
-            </Route>
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <ThemeProvider>
+          <Toaster />
+          <Sonner position="top-right" />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/admin-login" element={<AdminLoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              
+              {/* Protected user routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<DashboardHome />} />
+                <Route path="courses" element={<CoursesPage />} />
+                <Route path="courses/:courseId" element={<CourseViewPage />} />
+                <Route path="courses/create" element={<CourseEditPage />} />
+                <Route path="courses/edit/:courseId" element={<CourseEditPage />} />
+                <Route path="exercises" element={<ExercisesPage />} />
+                <Route path="tests" element={<TestsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+              </Route>
+              
+              {/* Protected admin routes */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <DashboardLayout />
+                </AdminRoute>
+              }>
+                <Route index element={<AdminDashboard />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="students" element={<ManageStudentsPage />} />
+                <Route path="courses" element={<CoursesPage />} />
+                <Route path="courses/:courseId" element={<CourseViewPage />} />
+                <Route path="courses/create" element={<CourseEditPage />} />
+                <Route path="courses/edit/:courseId" element={<CourseEditPage />} />
+              </Route>
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ThemeProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

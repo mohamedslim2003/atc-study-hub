@@ -39,7 +39,7 @@ const DashboardHome: React.FC = () => {
 
       {/* Stats Overview */}
       <div className="grid gap-6 md:grid-cols-4 mb-8">
-        <Card className="bg-gradient-to-br from-primary/80 to-primary text-white">
+        <Card className="bg-gradient-to-br from-primary/80 to-primary text-white dark:from-primary/90 dark:to-primary/70">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -166,11 +166,11 @@ const DashboardHome: React.FC = () => {
 
       {/* Recent activity section */}
       <Card>
-        <CardHeader className="border-b pb-4">
+        <CardHeader className="border-b pb-4 dark:border-border">
           <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y">
+          <div className="divide-y dark:divide-border">
             <div className="flex items-center py-4 px-6">
               <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-4">
                 <Award className="h-5 w-5" />
@@ -186,7 +186,7 @@ const DashboardHome: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="bg-muted/40 py-3 px-6 text-center">
+          <div className="bg-muted/40 dark:bg-muted/20 py-3 px-6 text-center">
             <p className="text-sm text-muted-foreground">
               Your learning activities will appear here
             </p>

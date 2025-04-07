@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/context/ThemeContext';
 import { 
   BookOpen, 
   ClipboardList, 
@@ -11,7 +12,9 @@ import {
   LogOut, 
   Menu, 
   X, 
-  Home 
+  Home,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -19,6 +22,7 @@ import { toast } from 'sonner';
 
 const DashboardLayout: React.FC = () => {
   const { user, logout, isAdmin } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -59,7 +63,7 @@ const DashboardLayout: React.FC = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-secondary/30">
+    <div className="flex min-h-screen bg-secondary/30 dark:bg-secondary/10">
       {/* Mobile sidebar backdrop */}
       {isSidebarOpen && (
         <div 
@@ -71,11 +75,11 @@ const DashboardLayout: React.FC = () => {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed top-0 left-0 z-50 flex h-full w-64 flex-col bg-white shadow-sm transition-transform duration-300 md:static md:translate-x-0",
+          "fixed top-0 left-0 z-50 flex h-full w-64 flex-col bg-white dark:bg-card shadow-sm transition-transform duration-300 md:static md:translate-x-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex items-center justify-center h-16 border-b px-4">
+        <div className="flex items-center justify-center h-16 border-b px-4 dark:border-border">
           <h1 className="font-bold text-xl text-primary">ATC Study Hub</h1>
           <Button 
             variant="ghost" 
@@ -102,8 +106,8 @@ const DashboardLayout: React.FC = () => {
                 className={({ isActive }) => cn(
                   "flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors",
                   isActive
-                    ? "bg-primary text-white"
-                    : "text-foreground hover:bg-secondary"
+                    ? "bg-primary text-white dark:bg-primary dark:text-primary-foreground"
+                    : "text-foreground hover:bg-secondary dark:hover:bg-secondary"
                 )}
                 end
               >
@@ -139,7 +143,7 @@ const DashboardLayout: React.FC = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Top navigation */}
-        <header className="h-16 border-b bg-white shadow-sm z-30 flex items-center px-4">
+        <header className="h-16 border-b bg-white dark:bg-card dark:border-border shadow-sm z-30 flex items-center px-4">
           <Button
             variant="ghost"
             size="icon"
@@ -150,6 +154,19 @@ const DashboardLayout: React.FC = () => {
           </Button>
           <div className="flex-1 flex justify-end">
             <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="mr-2"
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </Button>
               <span className="text-sm font-medium">
                 {user?.firstName} {user?.lastName}
               </span>

@@ -75,7 +75,7 @@ const AdminDashboard: React.FC = () => {
       {/* Stats Overview */}
       <div className="grid gap-6 md:grid-cols-4 mb-8">
         <Card 
-          className="bg-gradient-to-br from-primary/80 to-primary text-white cursor-pointer hover:shadow-md transition-all duration-300"
+          className="bg-gradient-to-br from-primary/80 to-primary text-white dark:from-primary/90 dark:to-primary/70 cursor-pointer hover:shadow-md transition-all duration-300"
           onClick={() => setIsStudentsDialogOpen(true)}
         >
           <CardContent className="p-6">
@@ -145,7 +145,7 @@ const AdminDashboard: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {usersCount > 0 ? (
-                <div className="flex items-center p-3 bg-secondary/50 rounded-lg">
+                <div className="flex items-center p-3 bg-secondary/50 dark:bg-secondary/30 rounded-lg">
                   <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
                     <Users className="h-5 w-5" />
                   </div>
@@ -206,12 +206,12 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <Card>
-        <CardHeader className="border-b">
+        <CardHeader className="border-b dark:border-border">
           <CardTitle>Platform Overview</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid gap-6 md:grid-cols-3">
-            <div className="border rounded-lg p-4 text-center">
+            <div className="border dark:border-border rounded-lg p-4 text-center">
               <div className="mx-auto h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-3">
                 <Award className="h-6 w-6" />
               </div>
@@ -221,7 +221,7 @@ const AdminDashboard: React.FC = () => {
               </p>
             </div>
             
-            <div className="border rounded-lg p-4 text-center cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => setIsStudentsDialogOpen(true)}>
+            <div className="border dark:border-border rounded-lg p-4 text-center cursor-pointer hover:bg-secondary/50 dark:hover:bg-secondary/30 transition-colors" onClick={() => setIsStudentsDialogOpen(true)}>
               <div className="mx-auto h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-3">
                 <Users className="h-6 w-6" />
               </div>
@@ -231,7 +231,7 @@ const AdminDashboard: React.FC = () => {
               </p>
             </div>
             
-            <div className="border rounded-lg p-4 text-center">
+            <div className="border dark:border-border rounded-lg p-4 text-center">
               <div className="mx-auto h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-3">
                 <BookOpen className="h-6 w-6" />
               </div>

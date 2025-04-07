@@ -26,19 +26,19 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-secondary/30 dark:bg-secondary/10 px-4 py-8 transition-colors duration-300 relative">
+    <div className="min-h-screen w-full flex items-center justify-center bg-secondary/30 dark:bg-secondary/10 px-4 py-8 transition-colors duration-500 relative">
       {/* Theme toggle */}
       <div className="absolute top-4 right-4">
         <Toggle
           pressed={theme === 'dark'}
           onPressedChange={toggleTheme}
           aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          className="p-2"
+          className="p-2 transition-all duration-300"
         >
           {theme === 'dark' ? (
-            <Sun className="h-4 w-4" />
+            <Sun className="h-4 w-4 transition-all duration-300" />
           ) : (
-            <Moon className="h-4 w-4" />
+            <Moon className="h-4 w-4 transition-all duration-300" />
           )}
         </Toggle>
       </div>
@@ -47,7 +47,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         {showBackButton && (
           <Button
             variant="ghost"
-            className="mb-4"
+            className="mb-4 transition-colors duration-300"
             onClick={() => navigate(backUrl)}
             leftIcon={<ArrowLeft className="h-4 w-4" />}
           >
@@ -55,11 +55,11 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
           </Button>
         )}
         
-        <Card className="w-full overflow-hidden">
+        <Card className="w-full overflow-hidden transition-all duration-500">
           <CardContent padding="lg">
             <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-foreground mb-1">{title}</h1>
-              {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+              <h1 className="text-2xl font-bold text-foreground dark:text-foreground mb-1 transition-colors duration-500">{title}</h1>
+              {subtitle && <p className="text-muted-foreground dark:text-muted-foreground transition-colors duration-500">{subtitle}</p>}
             </div>
             
             {children}
@@ -67,7 +67,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         </Card>
         
         <div className="text-center mt-6">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground transition-colors duration-500">
             ATC Study Hub - Learning Management System
           </p>
         </div>

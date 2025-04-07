@@ -21,6 +21,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const root = window.document.documentElement;
     
+    // Add transition classes before making changes to get smooth transitions
+    root.classList.add('transition-all', 'duration-500');
+    
     if (theme === 'dark') {
       root.classList.add('dark');
       root.classList.remove('light');

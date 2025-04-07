@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui-custom/Card';
-import { Compass, Airplane, Map } from 'lucide-react';
+import { Compass, Plane, Map } from 'lucide-react';
 
 interface CategoryWidgetProps {
   category: 'aerodrome' | 'approach' | 'ccr';
@@ -20,7 +20,7 @@ const CategoryWidget: React.FC<CategoryWidgetProps> = ({
       case 'aerodrome':
         return {
           title: 'Aerodrome',
-          icon: <Airplane className="h-8 w-8" />,
+          icon: <Plane className="h-8 w-8" />,
           description: 'Air traffic control for airport surface movements',
           color: 'from-blue-500/20 to-blue-600/20',
           activeColor: 'from-blue-500/40 to-blue-600/40',

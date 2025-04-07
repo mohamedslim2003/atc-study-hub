@@ -4,6 +4,7 @@ export interface Course {
   title: string;
   description: string;
   content: string;
+  category: 'aerodrome' | 'approach' | 'ccr' | 'uncategorized';
   imageUrl?: string;
   fileData?: string;
   fileType?: string;

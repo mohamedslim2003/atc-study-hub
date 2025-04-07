@@ -44,6 +44,7 @@ const CourseEditPage: React.FC = () => {
         title: data.title,
         description: data.description,
         content: data.content,
+        category: data.category,
       };
       
       // Add file data if present

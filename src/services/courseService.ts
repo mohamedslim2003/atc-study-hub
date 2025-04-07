@@ -1,3 +1,4 @@
+
 import { Course } from '@/types/course';
 
 // Mock storage in localStorage with compression to handle larger files
@@ -6,7 +7,17 @@ const COURSES_STORAGE_KEY = 'atc_courses';
 // Helper function to get courses from localStorage
 const getStoredCourses = (): Course[] => {
   const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
-  return storedCourses ? JSON.parse(storedCourses) : [];
+  let courses = storedCourses ? JSON.parse(storedCourses) : [];
+  
+  // Migrate existing courses to have a category if they don't have one
+  courses = courses.map((course: Course) => {
+    if (!course.category) {
+      return { ...course, category: 'uncategorized' };
+    }
+    return course;
+  });
+  
+  return courses;
 };
 
 // Helper function to save courses to localStorage with better handling for large files
@@ -14,20 +25,26 @@ const saveCourses = (courses: Course[]) => {
   try {
     // Create a copy of the courses with potentially truncated file data to fit in localStorage
     const processedCourses = courses.map(course => {
+      // Ensure all courses have a category
+      const courseWithCategory = { 
+        ...course, 
+        category: course.category || 'uncategorized' 
+      };
+      
       // If there's file data and it's very large, we'll need to handle it specially
-      if (course.fileData && course.fileData.length > 500000) {
+      if (courseWithCategory.fileData && courseWithCategory.fileData.length > 500000) {
         // For very large files, store a reference but not the full content
         // This is a limitation of localStorage, in a real app we'd use a proper backend storage
         console.log(`Course "${course.title}" has a large file (${course.fileData.length} bytes), truncating for storage`);
         
         // Keep only the file metadata but add a flag indicating the file is too large for preview
         return {
-          ...course,
-          fileData: course.fileData.substring(0, 150) + "...[truncated for storage]",
+          ...courseWithCategory,
+          fileData: courseWithCategory.fileData.substring(0, 150) + "...[truncated for storage]",
           fileStorageError: true
         };
       }
-      return course;
+      return courseWithCategory;
     });
     
     localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(processedCourses));
@@ -52,6 +69,7 @@ export const addCourse = (course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>
   const newCourse: Course = {
     ...course,
     id: crypto.randomUUID(),
+    category: course.category || 'uncategorized',
     createdAt: new Date(),
     updatedAt: new Date(),
   };

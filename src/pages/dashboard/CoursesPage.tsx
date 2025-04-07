@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
@@ -11,11 +10,13 @@ import { Course } from '@/types/course';
 import { useAuth } from '@/hooks/useAuth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import CategoryWidget from '@/components/courses/CategoryWidget';
 
 const CoursesPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+  const [activeCategory, setActiveCategory] = useState<'aerodrome' | 'approach' | 'ccr' | null>(null);
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   
@@ -49,10 +50,22 @@ const CoursesPage: React.FC = () => {
     setCourseToDelete(null);
   };
   
-  const filteredCourses = courses.filter(course => 
-    course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleCategoryClick = (category: 'aerodrome' | 'approach' | 'ccr') => {
+    setActiveCategory(activeCategory === category ? null : category);
+  };
+  
+  // Filter courses by search and category
+  const filteredCourses = courses.filter(course => {
+    // Text search
+    const matchesSearch = 
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Category filter
+    const matchesCategory = activeCategory ? course.category === activeCategory : true;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="animate-enter">
@@ -80,6 +93,25 @@ const CoursesPage: React.FC = () => {
         </div>
       </header>
 
+      {/* Category Widgets */}
+      <div className="mb-8 grid gap-4 grid-cols-1 md:grid-cols-3">
+        <CategoryWidget 
+          category="aerodrome" 
+          isActive={activeCategory === 'aerodrome'} 
+          onClick={() => handleCategoryClick('aerodrome')} 
+        />
+        <CategoryWidget 
+          category="approach" 
+          isActive={activeCategory === 'approach'} 
+          onClick={() => handleCategoryClick('approach')} 
+        />
+        <CategoryWidget 
+          category="ccr" 
+          isActive={activeCategory === 'ccr'} 
+          onClick={() => handleCategoryClick('ccr')} 
+        />
+      </div>
+
       {/* Search and filters */}
       <div className="mb-8">
         <Card>
@@ -102,6 +134,22 @@ const CoursesPage: React.FC = () => {
         </Card>
       </div>
 
+      {/* Active category display */}
+      {activeCategory && (
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold capitalize">
+            {activeCategory} Courses
+            <Button 
+              variant="link" 
+              onClick={() => setActiveCategory(null)} 
+              className="ml-2 h-auto p-0"
+            >
+              (Show All)
+            </Button>
+          </h2>
+        </div>
+      )}
+
       {/* Courses Grid */}
       {filteredCourses.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -118,7 +166,11 @@ const CoursesPage: React.FC = () => {
       ) : (
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>{searchQuery ? 'No Results Found' : 'No Courses Available Yet'}</CardTitle>
+            <CardTitle>
+              {searchQuery || activeCategory 
+                ? 'No Results Found' 
+                : 'No Courses Available Yet'}
+            </CardTitle>
           </CardHeader>
           <CardContent className="py-10">
             <div className="text-center">
@@ -126,11 +178,13 @@ const CoursesPage: React.FC = () => {
                 <BookOpen className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
-                {searchQuery ? 'No matching courses' : 'No Courses Available Yet'}
+                {searchQuery || activeCategory 
+                  ? 'No matching courses' 
+                  : 'No Courses Available Yet'}
               </h3>
               <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                {searchQuery 
-                  ? 'Try adjusting your search criteria' 
+                {searchQuery || activeCategory
+                  ? 'Try adjusting your search criteria or category selection' 
                   : isAdmin
                     ? 'Add your first course to get started'
                     : 'Courses will be added by the administrator soon. Check back later for updated content.'
@@ -142,8 +196,11 @@ const CoursesPage: React.FC = () => {
                     Add First Course
                   </Button>
                 ) : (
-                  <Button variant="outline" onClick={() => setSearchQuery('')}>
-                    Clear Search
+                  <Button variant="outline" onClick={() => {
+                    setSearchQuery('');
+                    setActiveCategory(null);
+                  }}>
+                    Clear Filters
                   </Button>
                 )}
               </div>
@@ -153,7 +210,7 @@ const CoursesPage: React.FC = () => {
       )}
 
       {/* Sample courses section (show only if no real courses and not searching) */}
-      {courses.length === 0 && !searchQuery && (
+      {courses.length === 0 && !searchQuery && !activeCategory && (
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Coming Soon</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

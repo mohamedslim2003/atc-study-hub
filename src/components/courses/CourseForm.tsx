@@ -9,6 +9,7 @@ import { Course } from '@/types/course';
 import { Loader2, Upload, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui-custom/Card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface CourseFormProps {
   course?: Course;
@@ -21,6 +22,7 @@ export interface CourseFormData {
   title: string;
   description: string;
   content: string;
+  category: 'aerodrome' | 'approach' | 'ccr' | 'uncategorized';
   file?: File;
   fileData?: string;
   fileType?: string;
@@ -41,6 +43,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
       title: course?.title || '',
       description: course?.description || '',
       content: course?.content || '',
+      category: course?.category || 'uncategorized',
     },
   });
 
@@ -51,6 +54,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
         title: course.title || '',
         description: course.description || '',
         content: course.content || '',
+        category: course.category || 'uncategorized',
       });
       
       // If there's file data in the course, set up preview
@@ -181,6 +185,49 @@ const CourseForm: React.FC<CourseFormProps> = ({
                   className="min-h-24"
                   {...field} 
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col md:flex-row gap-4"
+                >
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="aerodrome" id="aerodrome" />
+                    </FormControl>
+                    <FormLabel htmlFor="aerodrome" className="font-normal cursor-pointer">
+                      Aerodrome
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="approach" id="approach" />
+                    </FormControl>
+                    <FormLabel htmlFor="approach" className="font-normal cursor-pointer">
+                      Approach
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="ccr" id="ccr" />
+                    </FormControl>
+                    <FormLabel htmlFor="ccr" className="font-normal cursor-pointer">
+                      CCR
+                    </FormLabel>
+                  </FormItem>
+                </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>

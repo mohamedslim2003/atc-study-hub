@@ -23,8 +23,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     if (theme === 'dark') {
       root.classList.add('dark');
+      // Add a subtle animation when switching to dark mode
+      document.body.classList.add('transition-colors', 'duration-300');
     } else {
       root.classList.remove('dark');
+      // Add a subtle animation when switching to light mode
+      document.body.classList.add('transition-colors', 'duration-300');
     }
     
     // Save the theme to localStorage

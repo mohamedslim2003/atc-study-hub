@@ -103,6 +103,10 @@ export default {
 				'pulse': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.5' }
+				},
+				'theme-fade': {
+					'0%': { opacity: '0.8' },
+					'100%': { opacity: '1' }
 				}
 			},
 			animation: {
@@ -116,7 +120,11 @@ export default {
 				'slide-out': 'slide-out 0.3s ease-out',
 				'slide-up': 'slide-up 0.3s ease-out',
 				'slide-down': 'slide-down 0.3s ease-out',
-				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'theme-fade': 'theme-fade 0.5s ease-out'
+			},
+			transitionProperty: {
+				'theme': 'background-color, border-color, color, fill, stroke',
 			}
 		}
 	},

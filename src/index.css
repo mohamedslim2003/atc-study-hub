@@ -38,34 +38,34 @@
   }
 
   .dark {
-    /* Dark mode colors */
-    --background: 220 30% 10%;
-    --foreground: 210 40% 98%;
+    /* Enhanced dark mode colors with better contrast and aesthetics */
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
 
-    --card: 220 25% 15%;
-    --card-foreground: 210 40% 98%;
+    --card: 224 71% 8%;
+    --card-foreground: 213 31% 91%;
 
-    --popover: 220 25% 15%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 224 71% 8%;
+    --popover-foreground: 213 31% 91%;
 
-    --primary: 215 75% 60%;
-    --primary-foreground: 220 30% 10%;
+    --primary: 210 100% 66%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 215 25% 20%;
+    --secondary: 222 47% 16%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 25% 20%;
-    --muted-foreground: 210 40% 70%;
+    --muted: 223 47% 14%;
+    --muted-foreground: 215 20% 75%;
 
-    --accent: 215 25% 25%;
+    --accent: 217 33% 20%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 25% 25%;
-    --input: 215 25% 25%;
-    --ring: 215 75% 60%;
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+    --ring: 210 100% 66%;
   }
 
   * {
@@ -87,7 +87,7 @@
   }
 
   .dark .glass {
-    @apply bg-black/40 backdrop-blur-md border border-white/10 shadow-sm;
+    @apply bg-black/30 backdrop-blur-md border border-white/10 shadow-md;
   }
 
   .glass-dark {
@@ -100,6 +100,10 @@
   
   .text-gradient {
     @apply bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent;
+  }
+  
+  .dark .text-gradient {
+    @apply bg-gradient-to-r from-primary via-primary/90 to-primary/80 bg-clip-text text-transparent;
   }
   
   /* Animation classes */

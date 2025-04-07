@@ -19,6 +19,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 
 const DashboardLayout: React.FC = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -63,7 +64,7 @@ const DashboardLayout: React.FC = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-secondary/30 dark:bg-secondary/10">
+    <div className="flex min-h-screen bg-secondary/30 dark:bg-secondary/10 transition-colors duration-300">
       {/* Mobile sidebar backdrop */}
       {isSidebarOpen && (
         <div 
@@ -75,7 +76,7 @@ const DashboardLayout: React.FC = () => {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed top-0 left-0 z-50 flex h-full w-64 flex-col bg-white dark:bg-card shadow-sm transition-transform duration-300 md:static md:translate-x-0",
+          "fixed top-0 left-0 z-50 flex h-full w-64 flex-col bg-white dark:bg-card shadow-sm transition-all duration-300 md:static md:translate-x-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -143,7 +144,7 @@ const DashboardLayout: React.FC = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Top navigation */}
-        <header className="h-16 border-b bg-white dark:bg-card dark:border-border shadow-sm z-30 flex items-center px-4">
+        <header className="h-16 border-b bg-white dark:bg-card dark:border-border shadow-sm z-30 flex items-center px-4 transition-colors duration-300">
           <Button
             variant="ghost"
             size="icon"
@@ -153,24 +154,21 @@ const DashboardLayout: React.FC = () => {
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex-1 flex justify-end">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                className="mr-2"
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {theme === 'dark' ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </Button>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Sun className="h-4 w-4 text-muted-foreground" />
+                <Switch 
+                  checked={theme === 'dark'}
+                  onCheckedChange={toggleTheme}
+                  className="data-[state=checked]:bg-primary"
+                  aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                />
+                <Moon className="h-4 w-4 text-muted-foreground" />
+              </div>
               <span className="text-sm font-medium">
                 {user?.firstName} {user?.lastName}
               </span>
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-medium">
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium shadow-md">
                 {user?.firstName?.[0]}{user?.lastName?.[0]}
               </div>
             </div>

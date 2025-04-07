@@ -2,8 +2,10 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui-custom/Card';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
+import { useTheme } from '@/context/ThemeContext';
+import { Toggle } from '@/components/ui/toggle';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -21,9 +23,26 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   backUrl = '/',
 }) => {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-secondary/30 px-4 py-8">
+    <div className="min-h-screen w-full flex items-center justify-center bg-secondary/30 dark:bg-secondary/10 px-4 py-8 transition-colors duration-300 relative">
+      {/* Theme toggle */}
+      <div className="absolute top-4 right-4">
+        <Toggle
+          pressed={theme === 'dark'}
+          onPressedChange={toggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="p-2"
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </Toggle>
+      </div>
+      
       <div className="w-full max-w-md animate-enter">
         {showBackButton && (
           <Button

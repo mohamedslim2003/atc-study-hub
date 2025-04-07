@@ -1,7 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { FileText, AlertTriangle, FileIcon, Download } from 'lucide-react';
-import { Card } from '@/components/ui-custom/Card';
+import React, { useState } from 'react';
+import { FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
@@ -87,13 +86,12 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     );
   }
 
-  // For Word documents (docx, doc) - we'll show a preview overlay instead of trying to embed
-  // since Office Online viewer requires publicly accessible URLs
+  // For Word documents (docx, doc) - we'll show a preview dialog instead of embedding
   if (
     fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
     fileType === 'application/msword'
   ) {
-    // Create a more user-friendly message instead of attempting to embed
+    // Create a more user-friendly message
     const fileTypeDisplay = fileType.includes('openxmlformats') ? 'Word Document (.docx)' : 'Word Document (.doc)';
     
     return (
@@ -104,14 +102,14 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             <h3 className="text-xl font-medium mb-2">{fileName || 'Document'}</h3>
             <p className="text-muted-foreground mb-2">{fileTypeDisplay}</p>
             <p className="text-sm text-muted-foreground mb-6 max-w-md">
-              Word documents cannot be displayed directly in the browser. Please use one of the options below to view the document.
+              Word documents cannot be displayed directly in the browser. Please use the download option below to view the document.
             </p>
             
             <div className="flex flex-wrap gap-3 justify-center">
               <Button 
                 variant="outline" 
                 onClick={() => setShowWordPreviewDialog(true)}
-                leftIcon={<FileIcon className="h-4 w-4" />}
+                leftIcon={<FileText className="h-4 w-4" />}
               >
                 View Document Information
               </Button>

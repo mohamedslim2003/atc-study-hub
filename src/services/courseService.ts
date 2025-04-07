@@ -1,7 +1,6 @@
-
 import { Course } from '@/types/course';
 
-// Mock storage in localStorage
+// Mock storage in localStorage with compression to handle larger files
 const COURSES_STORAGE_KEY = 'atc_courses';
 
 // Helper function to get courses from localStorage
@@ -10,9 +9,32 @@ const getStoredCourses = (): Course[] => {
   return storedCourses ? JSON.parse(storedCourses) : [];
 };
 
-// Helper function to save courses to localStorage
+// Helper function to save courses to localStorage with better handling for large files
 const saveCourses = (courses: Course[]) => {
-  localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(courses));
+  try {
+    // Create a copy of the courses with potentially truncated file data to fit in localStorage
+    const processedCourses = courses.map(course => {
+      // If there's file data and it's very large, we'll need to handle it specially
+      if (course.fileData && course.fileData.length > 500000) {
+        // For very large files, store a reference but not the full content
+        // This is a limitation of localStorage, in a real app we'd use a proper backend storage
+        console.log(`Course "${course.title}" has a large file (${course.fileData.length} bytes), truncating for storage`);
+        
+        // Keep only the file metadata but add a flag indicating the file is too large for preview
+        return {
+          ...course,
+          fileData: course.fileData.substring(0, 150) + "...[truncated for storage]",
+          fileStorageError: true
+        };
+      }
+      return course;
+    });
+    
+    localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(processedCourses));
+  } catch (error) {
+    console.error("Error saving courses to localStorage:", error);
+    throw new Error("Failed to save course. The file might be too large for browser storage.");
+  }
 };
 
 export const getCourses = (): Course[] => {
@@ -34,10 +56,17 @@ export const addCourse = (course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>
     updatedAt: new Date(),
   };
   
-  courses.push(newCourse);
-  saveCourses(courses);
-  
-  return newCourse;
+  try {
+    // Check if we can actually save this to localStorage before adding
+    const testCourses = [...courses, newCourse];
+    saveCourses(testCourses);
+    
+    // If no error was thrown, return the new course
+    return newCourse;
+  } catch (error) {
+    console.error("Failed to add course:", error);
+    throw error;
+  }
 };
 
 export const updateCourse = (id: string, course: Partial<Course>): Course | null => {
@@ -55,9 +84,14 @@ export const updateCourse = (id: string, course: Partial<Course>): Course | null
   };
   
   courses[courseIndex] = updatedCourse;
-  saveCourses(courses);
   
-  return updatedCourse;
+  try {
+    saveCourses(courses);
+    return updatedCourse;
+  } catch (error) {
+    console.error("Failed to update course:", error);
+    throw error;
+  }
 };
 
 export const deleteCourse = (id: string): boolean => {

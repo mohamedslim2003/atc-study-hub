@@ -65,8 +65,8 @@ const CourseEditPage: React.FC = () => {
         toast.success('Course created successfully');
       }
       navigate('/dashboard/courses');
-    } catch (error) {
-      toast.error('Failed to save course');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save course');
       console.error(error);
     } finally {
       setIsSubmitting(false);

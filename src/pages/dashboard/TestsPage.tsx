@@ -1,11 +1,14 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
-import { FileText, Search, Filter, Trophy, Clock, BarChart, Calendar, Eye, Download } from 'lucide-react';
+import { FileText, Search, Filter, Trophy, Clock, BarChart, Calendar, Eye, Download, Plus } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import DocumentPreview from '@/components/courses/DocumentPreview';
 import { toast } from 'sonner';
+import CreateTestDialog from '@/components/tests/CreateTestDialog';
+import { useAuth } from '@/hooks/useAuth';
 
 // Mock test data with base64 data field for the document
 // In a real app, this would come from your backend or services
@@ -27,6 +30,8 @@ const mockTest = {
 const TestsPage: React.FC = () => {
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const { isAdmin } = useAuth();
 
   // Function to handle document preview
   const handlePreview = () => {
@@ -55,6 +60,16 @@ const TestsPage: React.FC = () => {
               Assess your knowledge with mock exams
             </p>
           </div>
+          {isAdmin && (
+            <div className="ml-auto">
+              <Button 
+                onClick={() => setShowCreateDialog(true)}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Create Test
+              </Button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -270,6 +285,12 @@ const TestsPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Create Test Dialog */}
+      <CreateTestDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog} 
+      />
     </div>
   );
 };

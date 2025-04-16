@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
@@ -17,6 +18,8 @@ const CourseViewPage: React.FC = () => {
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   useEffect(() => {
     if (courseId) {
@@ -26,6 +29,12 @@ const CourseViewPage: React.FC = () => {
       
       if (!foundCourse) {
         toast.error('Course not found');
+      } else if (foundCourse.fileStorageError) {
+        // Alert the user about the file storage limitation
+        toast.warning(
+          'This file exceeds browser storage limits. Full document data is not available for preview or download.',
+          { duration: 6000 }
+        );
       }
     }
   }, [courseId]);
@@ -50,42 +59,91 @@ const CourseViewPage: React.FC = () => {
   }
 
   const handleDownloadDocument = () => {
-    if (course.fileData && course.fileType) {
-      try {
-        // Create a download link for the document
-        const link = document.createElement('a');
+    // Check if the file has a storage error due to size limitations
+    if (course.fileStorageError) {
+      toast.error(
+        'This file exceeds browser storage limits and cannot be downloaded. Please contact an administrator.',
+        { duration: 5000 }
+      );
+      return;
+    }
+    
+    if (!course.fileData || !course.fileType) {
+      toast.error('No document available for download');
+      return;
+    }
+    
+    // Start the download process with progress
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    
+    // Simulate download progress
+    const interval = setInterval(() => {
+      setDownloadProgress(prev => {
+        const newProgress = prev + Math.floor(Math.random() * 10) + 5;
         
-        // Set up the download based on file type
-        link.href = course.fileData;
-        
-        // Set the filename with appropriate extension
-        let fileExtension = 'txt';
-        if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-          fileExtension = 'docx';
-        } else if (course.fileType === 'application/msword') {
-          fileExtension = 'doc';
-        } else if (course.fileType === 'application/pdf') {
-          fileExtension = 'pdf';
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          
+          // Complete the download after progress reaches 100%
+          setTimeout(() => {
+            try {
+              // Create a download link for the document
+              const link = document.createElement('a');
+              
+              // Set up the download based on file type
+              link.href = course.fileData;
+              
+              // Set the filename with appropriate extension
+              let fileExtension = 'txt';
+              if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                fileExtension = 'docx';
+              } else if (course.fileType === 'application/msword') {
+                fileExtension = 'doc';
+              } else if (course.fileType === 'application/pdf') {
+                fileExtension = 'pdf';
+              }
+              
+              // Use the provided fileName if available, otherwise create a generic one
+              const downloadName = course.fileName && course.fileName.trim() !== '' 
+                ? (course.fileName.includes('.') ? course.fileName : `${course.fileName}.${fileExtension}`)
+                : `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
+              
+              link.download = downloadName;
+              
+              // Trigger the download
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              toast.success('Download completed successfully');
+            } catch (error) {
+              console.error('Download error:', error);
+              toast.error('Failed to download file. The file may be corrupted or too large.');
+            }
+            
+            // Reset download state
+            setIsDownloading(false);
+          }, 500);
+          
+          return 100;
         }
         
-        link.download = course.fileName || `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
-        
-        // Trigger the download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast.success('Download started successfully');
-      } catch (error) {
-        console.error('Download error:', error);
-        toast.error('Failed to download file. Please try again.');
-      }
-    } else {
-      toast.error('No document available for download');
-    }
+        return newProgress;
+      });
+    }, 200);
   };
 
   const togglePreview = () => {
+    // Check if file has a storage error due to size limitations
+    if (course.fileStorageError) {
+      toast.warning(
+        'This file exceeds browser storage limits and cannot be previewed. Please contact an administrator.',
+        { duration: 5000 }
+      );
+      return;
+    }
+    
     setShowPreview(!showPreview);
   };
 
@@ -147,6 +205,11 @@ const CourseViewPage: React.FC = () => {
                   {getFileTypeInfo().icon}
                   <h3 className="text-lg font-medium">{course.fileName || 'Document'}</h3>
                   <p className="text-sm text-muted-foreground">{getFileTypeInfo().label}</p>
+                  {course.fileStorageError && (
+                    <p className="text-sm text-red-500 mt-2">
+                      This file exceeds browser storage limits. Contact an administrator for the full document.
+                    </p>
+                  )}
                 </div>
                 
                 <div className="flex flex-wrap gap-3 justify-center">
@@ -154,6 +217,7 @@ const CourseViewPage: React.FC = () => {
                     variant="outline"
                     onClick={togglePreview}
                     leftIcon={<Eye className="h-4 w-4" />}
+                    disabled={course.fileStorageError}
                   >
                     {showPreview ? 'Hide Preview' : 'Show Preview'}
                   </Button>
@@ -161,10 +225,21 @@ const CourseViewPage: React.FC = () => {
                   <Button
                     onClick={handleDownloadDocument}
                     leftIcon={<Download className="h-4 w-4" />}
+                    disabled={isDownloading || course.fileStorageError}
                   >
-                    Download
+                    {isDownloading ? 'Downloading...' : 'Download'}
                   </Button>
                 </div>
+                
+                {isDownloading && (
+                  <div className="mt-4 w-full max-w-md">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Downloading...</span>
+                      <span>{downloadProgress}%</span>
+                    </div>
+                    <Progress value={downloadProgress} className="h-2" />
+                  </div>
+                )}
               </div>
               
               {showPreview && (

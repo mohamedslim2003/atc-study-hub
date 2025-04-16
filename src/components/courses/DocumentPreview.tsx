@@ -54,6 +54,12 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             try {
               // Create a download link for the document
               const link = document.createElement('a');
+              
+              // Ensure fileData is actually set before trying to download
+              if (!fileData || fileData.startsWith('data:application') === false) {
+                throw new Error('Invalid file data');
+              }
+              
               link.href = fileData;
               
               // Set the filename with appropriate extension
@@ -66,7 +72,12 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 fileExtension = 'pdf';
               }
               
-              link.download = `${fileName || `document.${fileExtension}`}`;
+              // Use the provided fileName if available, otherwise create a generic one
+              const downloadName = fileName && fileName.trim() !== '' 
+                ? (fileName.includes('.') ? fileName : `${fileName}.${fileExtension}`)
+                : `document.${fileExtension}`;
+              
+              link.download = downloadName;
               
               // Trigger the download
               document.body.appendChild(link);
@@ -76,7 +87,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               toast.success('Download completed successfully');
             } catch (error) {
               console.error('Download error:', error);
-              toast.error('Failed to download file');
+              toast.error('Failed to download file. The file may be corrupted or too large.');
             }
             
             // Reset download state
@@ -225,6 +236,24 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       <p className="text-muted-foreground text-center mt-2">
         Preview not available for this file type. Please download the file to view it.
       </p>
+      <Button
+        onClick={handleDownloadDocument}
+        leftIcon={<Download className="h-4 w-4" />}
+        className="mt-4"
+        disabled={isDownloading}
+      >
+        {isDownloading ? 'Downloading...' : 'Download File'}
+      </Button>
+      
+      {isDownloading && (
+        <div className="mt-4 w-full max-w-md">
+          <div className="flex justify-between text-sm mb-1">
+            <span>Downloading...</span>
+            <span>{downloadProgress}%</span>
+          </div>
+          <Progress value={downloadProgress} className="h-2" />
+        </div>
+      )}
     </div>
   );
 };

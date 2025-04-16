@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { FileText, Search, Filter, Trophy, Clock, BarChart, Calendar, Eye, Download, Plus } from 'lucide-react';
@@ -9,6 +8,7 @@ import DocumentPreview from '@/components/courses/DocumentPreview';
 import { toast } from 'sonner';
 import CreateTestDialog from '@/components/tests/CreateTestDialog';
 import { useAuth } from '@/hooks/useAuth';
+import { Progress } from '@/components/ui/progress';
 
 // Mock test data with base64 data field for the document
 // In a real app, this would come from your backend or services

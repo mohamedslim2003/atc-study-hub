@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 
 interface DocumentPreviewProps {
   fileData: string;
@@ -18,6 +19,8 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showWordPreviewDialog, setShowWordPreviewDialog] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   // Helper to handle iframe load events
   const handleIframeLoad = () => {
@@ -30,28 +33,54 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     setError('Failed to load document preview');
   };
 
-  // Function to trigger download of document
+  // Function to trigger download of document with progress
   const handleDownloadDocument = () => {
-    // Create a download link for the document
-    const link = document.createElement('a');
-    link.href = fileData;
+    if (isDownloading) return;
     
-    // Set the filename with appropriate extension
-    let fileExtension = 'txt';
-    if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      fileExtension = 'docx';
-    } else if (fileType === 'application/msword') {
-      fileExtension = 'doc';
-    } else if (fileType === 'application/pdf') {
-      fileExtension = 'pdf';
-    }
+    setIsDownloading(true);
+    setDownloadProgress(0);
     
-    link.download = fileName || `document.${fileExtension}`;
-    
-    // Trigger the download
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Simulate download progress
+    const interval = setInterval(() => {
+      setDownloadProgress(prev => {
+        const newProgress = prev + Math.floor(Math.random() * 10) + 5;
+        
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          
+          // Complete the download after progress reaches 100%
+          setTimeout(() => {
+            // Create a download link for the document
+            const link = document.createElement('a');
+            link.href = fileData;
+            
+            // Set the filename with appropriate extension
+            let fileExtension = 'txt';
+            if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+              fileExtension = 'docx';
+            } else if (fileType === 'application/msword') {
+              fileExtension = 'doc';
+            } else if (fileType === 'application/pdf') {
+              fileExtension = 'pdf';
+            }
+            
+            link.download = fileName || `document.${fileExtension}`;
+            
+            // Trigger the download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Reset download state
+            setIsDownloading(false);
+          }, 500);
+          
+          return 100;
+        }
+        
+        return newProgress;
+      });
+    }, 200);
   };
 
   // For text files, display content directly
@@ -117,10 +146,21 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               <Button
                 onClick={handleDownloadDocument}
                 leftIcon={<Download className="h-4 w-4" />}
+                disabled={isDownloading}
               >
-                Download for Viewing
+                {isDownloading ? 'Downloading...' : 'Download for Viewing'}
               </Button>
             </div>
+            
+            {isDownloading && (
+              <div className="mt-4 w-full max-w-md">
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Downloading...</span>
+                  <span>{downloadProgress}%</span>
+                </div>
+                <Progress value={downloadProgress} className="h-2" />
+              </div>
+            )}
           </div>
         </div>
         
@@ -145,9 +185,20 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 className="w-full" 
                 onClick={handleDownloadDocument}
                 leftIcon={<Download className="h-4 w-4" />}
+                disabled={isDownloading}
               >
-                Download Document
+                {isDownloading ? 'Downloading...' : 'Download Document'}
               </Button>
+              
+              {isDownloading && (
+                <div className="mt-2 w-full">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Downloading...</span>
+                    <span>{downloadProgress}%</span>
+                  </div>
+                  <Progress value={downloadProgress} className="h-2" />
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>

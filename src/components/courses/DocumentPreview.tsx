@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
 
 interface DocumentPreviewProps {
   fileData: string;
@@ -50,26 +51,33 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           
           // Complete the download after progress reaches 100%
           setTimeout(() => {
-            // Create a download link for the document
-            const link = document.createElement('a');
-            link.href = fileData;
-            
-            // Set the filename with appropriate extension
-            let fileExtension = 'txt';
-            if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-              fileExtension = 'docx';
-            } else if (fileType === 'application/msword') {
-              fileExtension = 'doc';
-            } else if (fileType === 'application/pdf') {
-              fileExtension = 'pdf';
+            try {
+              // Create a download link for the document
+              const link = document.createElement('a');
+              link.href = fileData;
+              
+              // Set the filename with appropriate extension
+              let fileExtension = 'txt';
+              if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                fileExtension = 'docx';
+              } else if (fileType === 'application/msword') {
+                fileExtension = 'doc';
+              } else if (fileType === 'application/pdf') {
+                fileExtension = 'pdf';
+              }
+              
+              link.download = `${fileName || `document.${fileExtension}`}`;
+              
+              // Trigger the download
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              toast.success('Download completed successfully');
+            } catch (error) {
+              console.error('Download error:', error);
+              toast.error('Failed to download file');
             }
-            
-            link.download = fileName || `document.${fileExtension}`;
-            
-            // Trigger the download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
             
             // Reset download state
             setIsDownloading(false);
@@ -168,6 +176,9 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         <Dialog open={showWordPreviewDialog} onOpenChange={setShowWordPreviewDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogTitle>{fileName || 'Document'}</DialogTitle>
+            <DialogDescription>
+              Document details and download options.
+            </DialogDescription>
             <div className="space-y-4">
               <div className="flex items-start">
                 <FileText className="h-10 w-10 text-primary mr-4 mt-1" />

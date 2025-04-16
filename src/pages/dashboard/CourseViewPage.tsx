@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
@@ -52,39 +51,35 @@ const CourseViewPage: React.FC = () => {
 
   const handleDownloadDocument = () => {
     if (course.fileData && course.fileType) {
-      // Create a download link for the document
-      const link = document.createElement('a');
-      
-      // Set up the download based on file type
-      if (
-        course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        course.fileType === 'application/msword' ||
-        course.fileType === 'application/pdf'
-      ) {
-        // For DOCX/DOC/PDF files, use the base64 data
+      try {
+        // Create a download link for the document
+        const link = document.createElement('a');
+        
+        // Set up the download based on file type
         link.href = course.fileData;
-      } else {
-        // For text files, create a blob
-        const blob = new Blob([course.fileData], { type: 'text/plain' });
-        link.href = URL.createObjectURL(blob);
+        
+        // Set the filename with appropriate extension
+        let fileExtension = 'txt';
+        if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          fileExtension = 'docx';
+        } else if (course.fileType === 'application/msword') {
+          fileExtension = 'doc';
+        } else if (course.fileType === 'application/pdf') {
+          fileExtension = 'pdf';
+        }
+        
+        link.download = course.fileName || `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
+        
+        // Trigger the download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success('Download started successfully');
+      } catch (error) {
+        console.error('Download error:', error);
+        toast.error('Failed to download file. Please try again.');
       }
-      
-      // Set the filename with appropriate extension
-      let fileExtension = 'txt';
-      if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        fileExtension = 'docx';
-      } else if (course.fileType === 'application/msword') {
-        fileExtension = 'doc';
-      } else if (course.fileType === 'application/pdf') {
-        fileExtension = 'pdf';
-      }
-      
-      link.download = course.fileName || `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
-      
-      // Trigger the download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     } else {
       toast.error('No document available for download');
     }

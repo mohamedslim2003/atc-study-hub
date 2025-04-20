@@ -6,10 +6,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { BookOpen, ClipboardList, FileText, Award, Clock, Activity, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getUsersCount } from '@/utils/userUtils';
+import { getCourses } from '@/services/courseService';
 
 const DashboardHome: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const courses = getCourses();
 
   // Get time of day for greeting
   const getTimeOfDay = () => {
@@ -17,6 +19,10 @@ const DashboardHome: React.FC = () => {
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
+  };
+
+  const handleViewCourses = () => {
+    navigate('/dashboard/courses');
   };
 
   return (
@@ -60,8 +66,8 @@ const DashboardHome: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Enrolled Courses</p>
-                <h3 className="text-2xl font-bold mt-1">0</h3>
+                <p className="text-sm font-medium text-muted-foreground">Available Courses</p>
+                <h3 className="text-2xl font-bold mt-1">{courses.length}</h3>
               </div>
               <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
                 <BookOpen className="h-5 w-5 text-primary" />
@@ -113,7 +119,7 @@ const DashboardHome: React.FC = () => {
               Access comprehensive study materials and learning resources for ATC.
             </p>
             <Button 
-              onClick={() => navigate('/dashboard/courses')}
+              onClick={handleViewCourses}
               className="w-full"
             >
               Browse Courses

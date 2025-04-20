@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
 import { Card, CardContent } from '@/components/ui-custom/Card';
-import { ArrowLeft, BookOpen, Clock, Download, Eye, FileText, AlertCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Download, Eye, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { getCourseById } from '@/services/courseService';
@@ -11,7 +11,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import DocumentPreview from '@/components/courses/DocumentPreview';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const CourseViewPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -23,7 +22,6 @@ const CourseViewPage: React.FC = () => {
   
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState<string | null>(null);
   
   useEffect(() => {
     if (courseId) {
@@ -36,7 +34,7 @@ const CourseViewPage: React.FC = () => {
         } else if (foundCourse.fileStorageError) {
           // Alert the user about the file storage limitation - changed to be more informative
           toast.warning(
-            'This file is large and only partially stored. You can still download the complete file.',
+            'This file is large and only partially stored. You can still download the available content.',
             { duration: 6000 }
           );
         }
@@ -69,9 +67,6 @@ const CourseViewPage: React.FC = () => {
   }
 
   const handleDownloadDocument = () => {
-    // Reset error state
-    setDownloadError(null);
-    
     // Check if file data exists
     if (!course.fileData) {
       toast.error('No document data available for download');
@@ -128,8 +123,7 @@ const CourseViewPage: React.FC = () => {
               }
             } catch (error) {
               console.error('Download error:', error);
-              setDownloadError('Failed to download. Please check your connection and try again.');
-              toast.error('Failed to download file. Please check your connection and try again.');
+              toast.error('Failed to download file. Please try again.');
             }
             
             // Reset download state
@@ -204,16 +198,6 @@ const CourseViewPage: React.FC = () => {
           <Separator className="my-6" />
           
           <h2 className="text-xl font-semibold mb-4">Course Content</h2>
-          
-          {downloadError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Download Failed</AlertTitle>
-              <AlertDescription>
-                {downloadError} Please verify your connection and try again.
-              </AlertDescription>
-            </Alert>
-          )}
           
           {(course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
             course.fileType === 'application/msword' ||

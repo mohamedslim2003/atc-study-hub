@@ -58,9 +58,10 @@ const saveCourses = (courses: Course[]) => {
     });
     
     localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(processedCourses));
+    return true;
   } catch (error) {
     console.error("Error saving courses to localStorage:", error);
-    throw new Error("Failed to save course. The file might be too large for browser storage.");
+    throw new Error("Failed to save course. Storage limit reached.");
   }
 };
 

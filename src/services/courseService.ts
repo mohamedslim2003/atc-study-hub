@@ -1,3 +1,4 @@
+
 import { Course } from '@/types/course';
 
 // Mock storage in localStorage with compression to handle larger files
@@ -5,18 +6,25 @@ const COURSES_STORAGE_KEY = 'atc_courses';
 
 // Helper function to get courses from localStorage
 const getStoredCourses = (): Course[] => {
-  const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
-  let courses = storedCourses ? JSON.parse(storedCourses) : [];
-  
-  // Migrate existing courses to have a category if they don't have one
-  courses = courses.map((course: Course) => {
-    if (!course.category) {
-      return { ...course, category: 'uncategorized' };
-    }
-    return course;
-  });
-  
-  return courses;
+  try {
+    const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
+    if (!storedCourses) return [];
+    
+    let courses = JSON.parse(storedCourses);
+    
+    // Migrate existing courses to have a category if they don't have one
+    courses = courses.map((course: Course) => {
+      if (!course.category) {
+        return { ...course, category: 'uncategorized' };
+      }
+      return course;
+    });
+    
+    return courses;
+  } catch (error) {
+    console.error("Error retrieving courses from localStorage:", error);
+    return [];
+  }
 };
 
 // Helper function to save courses to localStorage with better handling for large files
@@ -57,12 +65,22 @@ const saveCourses = (courses: Course[]) => {
 };
 
 export const getCourses = (): Course[] => {
-  return getStoredCourses();
+  try {
+    return getStoredCourses();
+  } catch (error) {
+    console.error("Error getting courses:", error);
+    return [];
+  }
 };
 
 export const getCourseById = (id: string): Course | undefined => {
-  const courses = getStoredCourses();
-  return courses.find(course => course.id === id);
+  try {
+    const courses = getStoredCourses();
+    return courses.find(course => course.id === id);
+  } catch (error) {
+    console.error(`Error getting course with ID ${id}:`, error);
+    return undefined;
+  }
 };
 
 export const addCourse = (course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>): Course => {
@@ -122,6 +140,11 @@ export const deleteCourse = (id: string): boolean => {
     return false;
   }
   
-  saveCourses(filteredCourses);
-  return true;
+  try {
+    saveCourses(filteredCourses);
+    return true;
+  } catch (error) {
+    console.error(`Failed to delete course with ID ${id}:`, error);
+    return false;
+  }
 };

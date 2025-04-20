@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface DocumentPreviewProps {
   fileData: string;
@@ -24,6 +25,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const [showWordPreviewDialog, setShowWordPreviewDialog] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   
   // Helper to handle iframe load events
   const handleIframeLoad = () => {
@@ -40,8 +42,12 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const handleDownloadDocument = () => {
     if (isDownloading) return;
     
+    // Reset any previous errors
+    setDownloadError(null);
+    
     if (!fileData || fileData.length < 50) {
       toast.error('Invalid file data. Download not possible.');
+      setDownloadError('Invalid file data. Download not possible.');
       return;
     }
     
@@ -94,7 +100,8 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               }
             } catch (error) {
               console.error('Download error:', error);
-              toast.error('Failed to download file. The file may be corrupted or too large.');
+              setDownloadError('Failed to download. Please verify your connection and try again.');
+              toast.error('Failed to download file. Please verify your connection and try again.');
             }
             
             // Reset download state
@@ -120,6 +127,16 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           <p className="text-sm text-muted-foreground mb-6 max-w-md">
             You can still attempt to download the partial file, but it may not open correctly or may be missing content.
           </p>
+          
+          {downloadError && (
+            <Alert variant="destructive" className="mb-4 w-full max-w-md">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Download Failed</AlertTitle>
+              <AlertDescription>
+                {downloadError} Please verify your connection and try again.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <Button
             onClick={handleDownloadDocument}
@@ -164,6 +181,15 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             </div>
           </div>
         )}
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error Loading PDF</AlertTitle>
+            <AlertDescription>
+              Failed to load the PDF. Please try downloading the file instead.
+            </AlertDescription>
+          </Alert>
+        )}
         <iframe
           src={fileData}
           className="w-full h-[600px] border-0 rounded-md"
@@ -193,6 +219,16 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             <p className="text-sm text-muted-foreground mb-6 max-w-md">
               Word documents cannot be displayed directly in the browser. Please use the download option below to view the document.
             </p>
+            
+            {downloadError && (
+              <Alert variant="destructive" className="mb-4 w-full max-w-md">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Download Failed</AlertTitle>
+                <AlertDescription>
+                  {downloadError} Please verify your connection and try again.
+                </AlertDescription>
+              </Alert>
+            )}
             
             <div className="flex flex-wrap gap-3 justify-center">
               <Button 
@@ -244,6 +280,16 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 </div>
               </div>
               
+              {downloadError && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Download Failed</AlertTitle>
+                  <AlertDescription>
+                    {downloadError} Please verify your connection and try again.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <Button 
                 className="w-full" 
                 onClick={handleDownloadDocument}
@@ -277,6 +323,17 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       <p className="text-muted-foreground text-center mt-2">
         Preview not available for this file type. Please download the file to view it.
       </p>
+      
+      {downloadError && (
+        <Alert variant="destructive" className="mt-4 mb-4 w-full max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Download Failed</AlertTitle>
+          <AlertDescription>
+            {downloadError} Please verify your connection and try again.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <Button
         onClick={handleDownloadDocument}
         leftIcon={<Download className="h-4 w-4" />}

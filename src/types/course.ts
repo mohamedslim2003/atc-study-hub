@@ -9,7 +9,7 @@ export interface Course {
   fileData?: string;
   fileType?: string;
   fileName?: string;
-  fileStorageError?: boolean; // Added this property to fix the TypeScript error
+  fileStorageError?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

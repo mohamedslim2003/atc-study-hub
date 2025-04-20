@@ -1,4 +1,3 @@
-
 import { Course } from '@/types/course';
 
 // Mock storage in localStorage with compression to handle larger files
@@ -33,14 +32,17 @@ const saveCourses = (courses: Course[]) => {
       
       // If there's file data and it's very large, we'll need to handle it specially
       if (courseWithCategory.fileData && courseWithCategory.fileData.length > 500000) {
-        // For very large files, store a reference but not the full content
-        // This is a limitation of localStorage, in a real app we'd use a proper backend storage
-        console.log(`Course "${course.title}" has a large file (${course.fileData.length} bytes), truncating for storage`);
+        // For very large files, keep more data than before, but still truncate if needed
+        // This helps provide a better partial download experience
+        console.log(`Course "${course.title}" has a large file (${course.fileData.length} bytes), saving partial content for storage`);
         
-        // Keep only the file metadata but add a flag indicating the file is too large for preview
+        // Keep a larger portion of the file (first megabyte) for better download experience
+        const truncatedData = courseWithCategory.fileData.substring(0, 1000000);
+        
+        // Keep the file metadata and add a flag indicating the file is too large for complete preview
         return {
           ...courseWithCategory,
-          fileData: courseWithCategory.fileData.substring(0, 150) + "...[truncated for storage]",
+          fileData: truncatedData,
           fileStorageError: true
         };
       }

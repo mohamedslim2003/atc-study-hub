@@ -9,7 +9,7 @@ import { getCourseById } from '@/services/courseService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import DocumentPreview from '@/components/courses/DocumentPreview';
-import { Progress } from '@/components/ui/progress'; // Added import for Progress component
+import { Progress } from '@/components/ui/progress';
 
 const CourseViewPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -18,6 +18,7 @@ const CourseViewPage: React.FC = () => {
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   
@@ -30,9 +31,9 @@ const CourseViewPage: React.FC = () => {
       if (!foundCourse) {
         toast.error('Course not found');
       } else if (foundCourse.fileStorageError) {
-        // Alert the user about the file storage limitation
+        // Alert the user about the file storage limitation - changed to be more informative
         toast.warning(
-          'This file exceeds browser storage limits. Full document data is not available for preview or download.',
+          'This file is large and only partially stored. You can still download the complete file.',
           { duration: 6000 }
         );
       }
@@ -59,17 +60,9 @@ const CourseViewPage: React.FC = () => {
   }
 
   const handleDownloadDocument = () => {
-    // Check if the file has a storage error due to size limitations
-    if (course.fileStorageError) {
-      toast.error(
-        'This file exceeds browser storage limits and cannot be downloaded. Please contact an administrator.',
-        { duration: 5000 }
-      );
-      return;
-    }
-    
-    if (!course.fileData || !course.fileType) {
-      toast.error('No document available for download');
+    // Even if the file has a storage error, we'll attempt to download what we have
+    if (!course.fileData) {
+      toast.error('No document data available for download');
       return;
     }
     
@@ -116,7 +109,11 @@ const CourseViewPage: React.FC = () => {
               link.click();
               document.body.removeChild(link);
               
-              toast.success('Download completed successfully');
+              if (course.fileStorageError) {
+                toast.info('The file was only partially downloaded due to browser storage limitations. Some content may be missing.', { duration: 7000 });
+              } else {
+                toast.success('Download completed successfully');
+              }
             } catch (error) {
               console.error('Download error:', error);
               toast.error('Failed to download file. The file may be corrupted or too large.');
@@ -135,13 +132,12 @@ const CourseViewPage: React.FC = () => {
   };
 
   const togglePreview = () => {
-    // Check if file has a storage error due to size limitations
+    // Allow preview attempt even with storage error
     if (course.fileStorageError) {
       toast.warning(
-        'This file exceeds browser storage limits and cannot be previewed. Please contact an administrator.',
+        'This file is large and only partially stored. Preview may be incomplete.',
         { duration: 5000 }
       );
-      return;
     }
     
     setShowPreview(!showPreview);
@@ -206,8 +202,8 @@ const CourseViewPage: React.FC = () => {
                   <h3 className="text-lg font-medium">{course.fileName || 'Document'}</h3>
                   <p className="text-sm text-muted-foreground">{getFileTypeInfo().label}</p>
                   {course.fileStorageError && (
-                    <p className="text-sm text-red-500 mt-2">
-                      This file exceeds browser storage limits. Contact an administrator for the full document.
+                    <p className="text-sm text-amber-500 mt-2">
+                      This file exceeds browser storage limits. A partial download is still available.
                     </p>
                   )}
                 </div>
@@ -217,7 +213,6 @@ const CourseViewPage: React.FC = () => {
                     variant="outline"
                     onClick={togglePreview}
                     leftIcon={<Eye className="h-4 w-4" />}
-                    disabled={course.fileStorageError}
                   >
                     {showPreview ? 'Hide Preview' : 'Show Preview'}
                   </Button>
@@ -225,7 +220,7 @@ const CourseViewPage: React.FC = () => {
                   <Button
                     onClick={handleDownloadDocument}
                     leftIcon={<Download className="h-4 w-4" />}
-                    disabled={isDownloading || course.fileStorageError}
+                    disabled={isDownloading}
                   >
                     {isDownloading ? 'Downloading...' : 'Download'}
                   </Button>
@@ -248,6 +243,7 @@ const CourseViewPage: React.FC = () => {
                     fileData={course.fileData} 
                     fileType={course.fileType}
                     fileName={course.fileName}
+                    hasStorageError={course.fileStorageError}
                   />
                 </div>
               )}

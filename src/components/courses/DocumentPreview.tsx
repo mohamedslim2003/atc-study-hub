@@ -10,12 +10,14 @@ interface DocumentPreviewProps {
   fileData: string;
   fileType: string;
   fileName?: string;
+  hasStorageError?: boolean;
 }
 
 const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   fileData,
   fileType,
-  fileName = 'document'
+  fileName = 'document',
+  hasStorageError = false
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +40,11 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const handleDownloadDocument = () => {
     if (isDownloading) return;
     
+    if (!fileData || fileData.length < 50) {
+      toast.error('Invalid file data. Download not possible.');
+      return;
+    }
+    
     setIsDownloading(true);
     setDownloadProgress(0);
     
@@ -55,11 +62,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               // Create a download link for the document
               const link = document.createElement('a');
               
-              // Ensure fileData is actually set before trying to download
-              if (!fileData || fileData.startsWith('data:application') === false) {
-                throw new Error('Invalid file data');
-              }
-              
+              // We'll attempt to download whatever data we have
               link.href = fileData;
               
               // Set the filename with appropriate extension
@@ -84,7 +87,11 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               link.click();
               document.body.removeChild(link);
               
-              toast.success('Download completed successfully');
+              if (hasStorageError) {
+                toast.info('The file was only partially downloaded due to browser storage limitations. Some content may be missing.', { duration: 7000 });
+              } else {
+                toast.success('Download completed successfully');
+              }
             } catch (error) {
               console.error('Download error:', error);
               toast.error('Failed to download file. The file may be corrupted or too large.');
@@ -101,6 +108,40 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       });
     }, 200);
   };
+
+  // Display a warning if there's a storage error
+  if (hasStorageError) {
+    return (
+      <div className="bg-white rounded-md shadow p-6">
+        <div className="flex flex-col items-center text-center mb-6">
+          <FileText className="h-16 w-16 text-amber-500 mb-4" />
+          <h3 className="text-xl font-medium mb-2">{fileName || 'Document'}</h3>
+          <p className="text-amber-500 mb-6">This file exceeds browser storage limits and is only partially available.</p>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md">
+            You can still attempt to download the partial file, but it may not open correctly or may be missing content.
+          </p>
+          
+          <Button
+            onClick={handleDownloadDocument}
+            leftIcon={<Download className="h-4 w-4" />}
+            disabled={isDownloading}
+          >
+            {isDownloading ? 'Downloading...' : 'Download Partial File'}
+          </Button>
+          
+          {isDownloading && (
+            <div className="mt-4 w-full max-w-md">
+              <div className="flex justify-between text-sm mb-1">
+                <span>Downloading...</span>
+                <span>{downloadProgress}%</span>
+              </div>
+              <Progress value={downloadProgress} className="h-2" />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // For text files, display content directly
   if (fileType === 'text/plain') {

@@ -31,6 +31,13 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     if (!fileData || fileData.length < 10) {
       setError('Invalid or missing file data');
       setIsLoading(false);
+      return;
+    }
+    
+    // Validate data URI format
+    if (!fileData.startsWith('data:')) {
+      setError('Invalid file data format');
+      setIsLoading(false);
     }
   }, [fileData]);
   
@@ -78,19 +85,27 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               
               const contentType = matches[1];
               const base64Data = matches[2];
-              const binaryString = window.atob(base64Data);
-              const byteArray = new Uint8Array(binaryString.length);
               
-              for (let i = 0; i < binaryString.length; i++) {
-                byteArray[i] = binaryString.charCodeAt(i);
+              // Convert Base64 to binary in a more reliable way
+              const byteCharacters = atob(base64Data);
+              const byteArrays = [];
+              
+              for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                  byteNumbers[i] = slice.charCodeAt(i);
+                }
+                
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
               }
               
-              const blob = new Blob([byteArray], { type: contentType });
-              const url = URL.createObjectURL(blob);
+              const blob = new Blob(byteArrays, { type: contentType });
               
               // Create a download link for the document
-              const link = document.createElement('a');
-              link.href = url;
+              const url = URL.createObjectURL(blob);
               
               // Set the filename with appropriate extension
               let fileExtension = 'txt';
@@ -107,6 +122,8 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 ? (fileName.includes('.') ? fileName : `${fileName}.${fileExtension}`)
                 : `document.${fileExtension}`;
               
+              const link = document.createElement('a');
+              link.href = url;
               link.download = downloadName;
               
               // Trigger the download
@@ -148,7 +165,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           <h3 className="text-xl font-medium mb-2">{fileName || 'Document'}</h3>
           <p className="text-amber-500 mb-6">This file exceeds browser storage limits and is only partially available.</p>
           <p className="text-sm text-muted-foreground mb-6 max-w-md">
-            You can still download the partial file, but it may not contain all content.
+            You can still download the partial file, but it may not contain all content. The downloaded file may be corrupted.
           </p>
           
           <Button
@@ -168,6 +185,29 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               <Progress value={downloadProgress} className="h-2" />
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // If there's an error with the file data
+  if (error) {
+    return (
+      <div className="bg-white rounded-md shadow p-6">
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error with Document</AlertTitle>
+          <AlertDescription>
+            {error}. The document may be corrupted or unavailable.
+          </AlertDescription>
+        </Alert>
+        
+        <div className="flex flex-col items-center text-center mt-6">
+          <FileText className="h-16 w-16 text-destructive mb-4" />
+          <h3 className="text-xl font-medium mb-2">{fileName || 'Document'}</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md">
+            The document preview could not be loaded. This could be due to browser storage limitations or a corrupted file.
+          </p>
         </div>
       </div>
     );
@@ -214,7 +254,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     );
   }
 
-  // For Word documents (docx, doc) - we'll show a preview dialog instead of embedding
+  // For Word documents (docx, doc) - show a preview dialog instead of embedding
   if (
     fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
     fileType === 'application/msword'

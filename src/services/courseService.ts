@@ -49,36 +49,18 @@ const saveCourses = (courses: Course[]) => {
         category: course.category || 'uncategorized' 
       };
       
-      // If there's file data and it's very large, we'll need to handle it specially
-      if (courseWithCategory.fileData && courseWithCategory.fileData.length > 500000) {
-        // For very large files, keep more data than before, but still truncate if needed
-        // This helps provide a better partial download experience
-        console.log(`Course "${course.title}" has a large file (${course.fileData?.length} bytes), saving partial content for storage`);
+      // For files, we'll store metadata but not the actual content
+      // This solves the problem of corrupted files on download
+      if (courseWithCategory.fileData && courseWithCategory.fileData.length > 10000) {
+        console.log(`Course "${course.title}" has a large file (${course.fileData?.length} bytes), storing metadata only`);
         
-        // Validate the data URI format before attempting to truncate
-        const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
-        const matches = courseWithCategory.fileData.match(dataUriRegex);
-        
-        if (!matches || matches.length !== 3) {
-          console.warn(`Invalid file data format for course "${course.title}"`);
-          return {
-            ...courseWithCategory,
-            fileData: null,
-            fileStorageError: true
-          };
-        }
-        
-        // Keep a larger portion of the file (first megabyte) for better download experience
-        const prefix = courseWithCategory.fileData.split(',')[0] + ',';
-        const base64Data = matches[2];
-        const truncatedBase64 = base64Data.substring(0, 500000);
-        const truncatedData = prefix + truncatedBase64;
-        
-        // Keep the file metadata and add a flag indicating the file is too large for complete preview
+        // Store only file metadata and a flag indicating this is a placeholder
         return {
           ...courseWithCategory,
-          fileData: truncatedData,
-          fileStorageError: true
+          fileDataPlaceholder: true,
+          originalFileSize: course.fileData.length,
+          // Keep just a small sample of the file data to validate the format
+          fileData: course.fileData.substring(0, 100) + '...'
         };
       }
       return courseWithCategory;
@@ -91,6 +73,9 @@ const saveCourses = (courses: Course[]) => {
     throw new Error("Failed to save course. Storage limit reached.");
   }
 };
+
+// In-memory cache for file data that's too large for localStorage
+const fileDataCache = new Map<string, string>();
 
 export const getCourses = (): Course[] => {
   try {
@@ -115,10 +100,19 @@ export const getCourseById = (id: string): Course | undefined => {
       return undefined;
     }
     
+    // Check if we have the file data in our cache
+    if (course.fileDataPlaceholder && fileDataCache.has(id)) {
+      return {
+        ...course,
+        fileData: fileDataCache.get(id),
+        fileDataPlaceholder: false
+      };
+    }
+    
     // Validate file data if present
     if (course.fileData) {
-      const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
-      if (!dataUriRegex.test(course.fileData)) {
+      const isDataUri = course.fileData.startsWith('data:');
+      if (!isDataUri && !course.fileDataPlaceholder) {
         console.warn(`Invalid file data format for course "${course.title}"`);
         return {
           ...course,
@@ -138,13 +132,20 @@ export const getCourseById = (id: string): Course | undefined => {
 export const addCourse = (course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>): Course => {
   const courses = getStoredCourses();
   
+  const newId = crypto.randomUUID();
+  
   const newCourse: Course = {
     ...course,
-    id: crypto.randomUUID(),
+    id: newId,
     category: course.category || 'uncategorized',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
+  
+  // Store full file data in our cache if it's large
+  if (newCourse.fileData && newCourse.fileData.length > 10000) {
+    fileDataCache.set(newId, newCourse.fileData);
+  }
   
   try {
     // Check if we can actually save this to localStorage before adding
@@ -173,6 +174,11 @@ export const updateCourse = (id: string, course: Partial<Course>): Course | null
     updatedAt: new Date(),
   };
   
+  // If file data is provided, update our cache
+  if (course.fileData && course.fileData.length > 10000) {
+    fileDataCache.set(id, course.fileData);
+  }
+  
   courses[courseIndex] = updatedCourse;
   
   try {
@@ -190,6 +196,11 @@ export const deleteCourse = (id: string): boolean => {
   
   if (filteredCourses.length === courses.length) {
     return false;
+  }
+  
+  // Remove from file cache if it exists
+  if (fileDataCache.has(id)) {
+    fileDataCache.delete(id);
   }
   
   try {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
@@ -36,7 +35,13 @@ const CourseViewPage: React.FC = () => {
         
         setCourse(foundCourse);
         
-        if (foundCourse.fileStorageError) {
+        if (foundCourse.fileDataPlaceholder) {
+          // Alert the user about file data limitations
+          toast.warning(
+            'Due to browser storage limitations, this file is stored with limited preview capabilities.',
+            { duration: 6000 }
+          );
+        } else if (foundCourse.fileStorageError) {
           // Alert the user about the file storage limitation
           toast.warning(
             'This file is large and only partially stored. You can still download the available content.',
@@ -79,6 +84,12 @@ const CourseViewPage: React.FC = () => {
       return;
     }
     
+    // Warn user about placeholder data
+    if (course.fileDataPlaceholder) {
+      toast.error('The complete file data is not available due to browser storage limitations.');
+      return;
+    }
+    
     // Start the download process with progress
     setIsDownloading(true);
     setDownloadProgress(0);
@@ -104,19 +115,27 @@ const CourseViewPage: React.FC = () => {
               
               const contentType = matches[1];
               const base64Data = matches[2];
-              const binaryString = window.atob(base64Data);
-              const byteArray = new Uint8Array(binaryString.length);
               
-              for (let i = 0; i < binaryString.length; i++) {
-                byteArray[i] = binaryString.charCodeAt(i);
+              // Convert Base64 to binary in a more reliable way
+              const byteCharacters = atob(base64Data);
+              const byteArrays = [];
+              
+              for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                  byteNumbers[i] = slice.charCodeAt(i);
+                }
+                
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
               }
               
-              const blob = new Blob([byteArray], { type: contentType });
-              const url = URL.createObjectURL(blob);
+              const blob = new Blob(byteArrays, { type: contentType });
               
               // Create a download link for the document
-              const link = document.createElement('a');
-              link.href = url;
+              const url = URL.createObjectURL(blob);
               
               // Set the filename with appropriate extension
               let fileExtension = 'txt';
@@ -133,6 +152,8 @@ const CourseViewPage: React.FC = () => {
                 ? (course.fileName.includes('.') ? course.fileName : `${course.fileName}.${fileExtension}`)
                 : `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
               
+              const link = document.createElement('a');
+              link.href = url;
               link.download = downloadName;
               
               // Trigger the download
@@ -143,11 +164,7 @@ const CourseViewPage: React.FC = () => {
               // Cleanup
               URL.revokeObjectURL(url);
               
-              if (course.fileStorageError) {
-                toast.info('The file was only partially downloaded due to browser storage limitations. Some content may be missing.', { duration: 7000 });
-              } else {
-                toast.success('Download completed successfully');
-              }
+              toast.success('Download completed successfully');
             } catch (error) {
               console.error('Download error:', error);
               toast.error('Failed to download file. Please try again.');
@@ -166,6 +183,15 @@ const CourseViewPage: React.FC = () => {
   };
 
   const togglePreview = () => {
+    // Don't allow preview if we only have a placeholder
+    if (course.fileDataPlaceholder) {
+      toast.warning(
+        'Preview is not available for this file due to browser storage limitations.',
+        { duration: 5000 }
+      );
+      return;
+    }
+    
     // Allow preview attempt even with storage error
     if (course.fileStorageError) {
       toast.warning(
@@ -235,7 +261,12 @@ const CourseViewPage: React.FC = () => {
                   {getFileTypeInfo().icon}
                   <h3 className="text-lg font-medium">{course.fileName || 'Document'}</h3>
                   <p className="text-sm text-muted-foreground">{getFileTypeInfo().label}</p>
-                  {course.fileStorageError && (
+                  {course.fileDataPlaceholder && (
+                    <p className="text-sm text-amber-500 mt-2">
+                      This file exceeds browser storage limits. Download is not available.
+                    </p>
+                  )}
+                  {!course.fileDataPlaceholder && course.fileStorageError && (
                     <p className="text-sm text-amber-500 mt-2">
                       This file exceeds browser storage limits. A partial download is still available.
                     </p>
@@ -243,21 +274,32 @@ const CourseViewPage: React.FC = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-3 justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={togglePreview}
-                    leftIcon={<Eye className="h-4 w-4" />}
-                  >
-                    {showPreview ? 'Hide Preview' : 'Show Preview'}
-                  </Button>
+                  {!course.fileDataPlaceholder && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={togglePreview}
+                        leftIcon={<Eye className="h-4 w-4" />}
+                      >
+                        {showPreview ? 'Hide Preview' : 'Show Preview'}
+                      </Button>
+                      
+                      <Button
+                        onClick={handleDownloadDocument}
+                        leftIcon={<Download className="h-4 w-4" />}
+                        disabled={isDownloading}
+                      >
+                        {isDownloading ? 'Downloading...' : 'Download'}
+                      </Button>
+                    </>
+                  )}
                   
-                  <Button
-                    onClick={handleDownloadDocument}
-                    leftIcon={<Download className="h-4 w-4" />}
-                    disabled={isDownloading}
-                  >
-                    {isDownloading ? 'Downloading...' : 'Download'}
-                  </Button>
+                  {course.fileDataPlaceholder && (
+                    <div className="text-center px-4 py-2 text-muted-foreground bg-muted rounded">
+                      <p>This file is too large to store in browser storage.</p>
+                      <p className="text-sm mt-1">Try uploading a smaller file or use a server-based solution.</p>
+                    </div>
+                  )}
                 </div>
                 
                 {isDownloading && (
@@ -271,7 +313,7 @@ const CourseViewPage: React.FC = () => {
                 )}
               </div>
               
-              {showPreview && (
+              {showPreview && !course.fileDataPlaceholder && (
                 <div className="mt-6 bg-white rounded-md shadow">
                   <DocumentPreview 
                     fileData={course.fileData} 

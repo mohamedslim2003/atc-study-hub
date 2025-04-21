@@ -68,11 +68,29 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           // Complete the download after progress reaches 100%
           setTimeout(() => {
             try {
+              // Create blob from data URI
+              const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
+              const matches = fileData.match(dataUriRegex);
+              
+              if (!matches || matches.length !== 3) {
+                throw new Error('Invalid file data format');
+              }
+              
+              const contentType = matches[1];
+              const base64Data = matches[2];
+              const binaryString = window.atob(base64Data);
+              const byteArray = new Uint8Array(binaryString.length);
+              
+              for (let i = 0; i < binaryString.length; i++) {
+                byteArray[i] = binaryString.charCodeAt(i);
+              }
+              
+              const blob = new Blob([byteArray], { type: contentType });
+              const url = URL.createObjectURL(blob);
+              
               // Create a download link for the document
               const link = document.createElement('a');
-              
-              // We'll attempt to download whatever data we have
-              link.href = fileData;
+              link.href = url;
               
               // Set the filename with appropriate extension
               let fileExtension = 'txt';
@@ -95,6 +113,9 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
+              
+              // Cleanup
+              URL.revokeObjectURL(url);
               
               if (hasStorageError) {
                 toast.info('The file was only partially downloaded due to browser storage limitations. Some content may be missing.', { duration: 7000 });

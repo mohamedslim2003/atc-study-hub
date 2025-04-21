@@ -27,13 +27,17 @@ const CourseViewPage: React.FC = () => {
     if (courseId) {
       try {
         const foundCourse = getCourseById(courseId);
-        setCourse(foundCourse);
         
         if (!foundCourse) {
           toast.error('Course not found');
           navigate('/dashboard/courses');
-        } else if (foundCourse.fileStorageError) {
-          // Alert the user about the file storage limitation - changed to be more informative
+          return;
+        }
+        
+        setCourse(foundCourse);
+        
+        if (foundCourse.fileStorageError) {
+          // Alert the user about the file storage limitation
           toast.warning(
             'This file is large and only partially stored. You can still download the available content.',
             { duration: 6000 }
@@ -90,11 +94,29 @@ const CourseViewPage: React.FC = () => {
           // Complete the download after progress reaches 100%
           setTimeout(() => {
             try {
+              // Create blob from data URI
+              const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
+              const matches = course.fileData.match(dataUriRegex);
+              
+              if (!matches || matches.length !== 3) {
+                throw new Error('Invalid file data format');
+              }
+              
+              const contentType = matches[1];
+              const base64Data = matches[2];
+              const binaryString = window.atob(base64Data);
+              const byteArray = new Uint8Array(binaryString.length);
+              
+              for (let i = 0; i < binaryString.length; i++) {
+                byteArray[i] = binaryString.charCodeAt(i);
+              }
+              
+              const blob = new Blob([byteArray], { type: contentType });
+              const url = URL.createObjectURL(blob);
+              
               // Create a download link for the document
               const link = document.createElement('a');
-              
-              // Set up the download based on file type
-              link.href = course.fileData;
+              link.href = url;
               
               // Set the filename with appropriate extension
               let fileExtension = 'txt';
@@ -117,6 +139,9 @@ const CourseViewPage: React.FC = () => {
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
+              
+              // Cleanup
+              URL.revokeObjectURL(url);
               
               if (course.fileStorageError) {
                 toast.info('The file was only partially downloaded due to browser storage limitations. Some content may be missing.', { duration: 7000 });

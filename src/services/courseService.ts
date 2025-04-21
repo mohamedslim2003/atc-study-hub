@@ -55,8 +55,24 @@ const saveCourses = (courses: Course[]) => {
         // This helps provide a better partial download experience
         console.log(`Course "${course.title}" has a large file (${course.fileData?.length} bytes), saving partial content for storage`);
         
+        // Validate the data URI format before attempting to truncate
+        const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
+        const matches = courseWithCategory.fileData.match(dataUriRegex);
+        
+        if (!matches || matches.length !== 3) {
+          console.warn(`Invalid file data format for course "${course.title}"`);
+          return {
+            ...courseWithCategory,
+            fileData: null,
+            fileStorageError: true
+          };
+        }
+        
         // Keep a larger portion of the file (first megabyte) for better download experience
-        const truncatedData = courseWithCategory.fileData.substring(0, 1000000);
+        const prefix = courseWithCategory.fileData.split(',')[0] + ',';
+        const base64Data = matches[2];
+        const truncatedBase64 = base64Data.substring(0, 500000);
+        const truncatedData = prefix + truncatedBase64;
         
         // Keep the file metadata and add a flag indicating the file is too large for complete preview
         return {
@@ -93,7 +109,26 @@ export const getCourseById = (id: string): Course | undefined => {
     }
     
     const courses = getStoredCourses();
-    return courses.find(course => course.id === id);
+    const course = courses.find(course => course.id === id);
+    
+    if (!course) {
+      return undefined;
+    }
+    
+    // Validate file data if present
+    if (course.fileData) {
+      const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
+      if (!dataUriRegex.test(course.fileData)) {
+        console.warn(`Invalid file data format for course "${course.title}"`);
+        return {
+          ...course,
+          fileData: null,
+          fileStorageError: true
+        };
+      }
+    }
+    
+    return course;
   } catch (error) {
     console.error(`Error getting course with ID ${id}:`, error);
     return undefined;

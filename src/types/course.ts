@@ -10,6 +10,8 @@ export interface Course {
   fileType?: string;
   fileName?: string;
   fileStorageError?: boolean;
+  fileDataPlaceholder?: boolean;
+  originalFileSize?: number;
   createdAt: Date;
   updatedAt: Date;
 }

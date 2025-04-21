@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
@@ -30,6 +31,7 @@ const CourseViewPage: React.FC = () => {
         
         if (!foundCourse) {
           toast.error('Course not found');
+          navigate('/dashboard/courses');
         } else if (foundCourse.fileStorageError) {
           // Alert the user about the file storage limitation - changed to be more informative
           toast.warning(
@@ -40,11 +42,12 @@ const CourseViewPage: React.FC = () => {
       } catch (error) {
         console.error("Error loading course:", error);
         toast.error('Failed to load course. Please try again.');
+        navigate('/dashboard/courses');
       } finally {
         setLoading(false);
       }
     }
-  }, [courseId]);
+  }, [courseId, navigate]);
   
   if (loading) {
     return (

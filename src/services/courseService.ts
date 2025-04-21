@@ -1,4 +1,3 @@
-
 import { Course } from '@/types/course';
 
 // Mock storage in localStorage with compression to handle larger files
@@ -12,6 +11,12 @@ const getStoredCourses = (): Course[] => {
     
     let courses = JSON.parse(storedCourses);
     
+    // Validate the courses array
+    if (!Array.isArray(courses)) {
+      console.warn("Invalid courses data in localStorage, returning empty array");
+      return [];
+    }
+    
     // Migrate existing courses to have a category if they don't have one
     courses = courses.map((course: Course) => {
       if (!course.category) {
@@ -23,6 +28,7 @@ const getStoredCourses = (): Course[] => {
     return courses;
   } catch (error) {
     console.error("Error retrieving courses from localStorage:", error);
+    localStorage.removeItem(COURSES_STORAGE_KEY); // Clear corrupted data
     return [];
   }
 };
@@ -30,6 +36,11 @@ const getStoredCourses = (): Course[] => {
 // Helper function to save courses to localStorage with better handling for large files
 const saveCourses = (courses: Course[]) => {
   try {
+    if (!Array.isArray(courses)) {
+      console.error("Attempted to save invalid courses data (not an array)");
+      return false;
+    }
+    
     // Create a copy of the courses with potentially truncated file data to fit in localStorage
     const processedCourses = courses.map(course => {
       // Ensure all courses have a category
@@ -42,7 +53,7 @@ const saveCourses = (courses: Course[]) => {
       if (courseWithCategory.fileData && courseWithCategory.fileData.length > 500000) {
         // For very large files, keep more data than before, but still truncate if needed
         // This helps provide a better partial download experience
-        console.log(`Course "${course.title}" has a large file (${course.fileData.length} bytes), saving partial content for storage`);
+        console.log(`Course "${course.title}" has a large file (${course.fileData?.length} bytes), saving partial content for storage`);
         
         // Keep a larger portion of the file (first megabyte) for better download experience
         const truncatedData = courseWithCategory.fileData.substring(0, 1000000);
@@ -76,6 +87,11 @@ export const getCourses = (): Course[] => {
 
 export const getCourseById = (id: string): Course | undefined => {
   try {
+    if (!id) {
+      console.error("Invalid course ID (empty)");
+      return undefined;
+    }
+    
     const courses = getStoredCourses();
     return courses.find(course => course.id === id);
   } catch (error) {

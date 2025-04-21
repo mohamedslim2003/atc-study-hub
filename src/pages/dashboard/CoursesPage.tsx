@@ -25,8 +25,14 @@ const CoursesPage: React.FC = () => {
   }, []);
   
   const loadCourses = () => {
-    const allCourses = getCourses();
-    setCourses(allCourses);
+    try {
+      const allCourses = getCourses();
+      setCourses(allCourses || []);
+    } catch (error) {
+      console.error("Error loading courses:", error);
+      setCourses([]);
+      toast.error("Failed to load courses. Please refresh the page.");
+    }
   };
   
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {

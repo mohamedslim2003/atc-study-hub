@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
@@ -25,6 +26,14 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   
+  // Validate file data
+  useEffect(() => {
+    if (!fileData || fileData.length < 10) {
+      setError('Invalid or missing file data');
+      setIsLoading(false);
+    }
+  }, [fileData]);
+  
   // Helper to handle iframe load events
   const handleIframeLoad = () => {
     setIsLoading(false);
@@ -41,7 +50,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     if (isDownloading) return;
     
     if (!fileData || fileData.length < 50) {
-      toast.error('Invalid file data. Please try again.');
+      toast.error('Invalid file data. Please try again or contact support.');
       return;
     }
     

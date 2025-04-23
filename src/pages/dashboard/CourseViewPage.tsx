@@ -116,55 +116,56 @@ const CourseViewPage: React.FC = () => {
               const contentType = matches[1];
               const base64Data = matches[2];
               
-              // Convert Base64 to binary in a more reliable way
-              const byteCharacters = atob(base64Data);
-              const byteArrays = [];
+              // Fix: Clean the base64 string to ensure it's properly formatted
+              const cleanedBase64 = base64Data.replace(/\s/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
               
-              for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-                const slice = byteCharacters.slice(offset, offset + 512);
+              try {
+                // Convert Base64 to binary in a more reliable way
+                const byteCharacters = atob(cleanedBase64);
+                const byteNumbers = new Array(byteCharacters.length);
                 
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) {
-                  byteNumbers[i] = slice.charCodeAt(i);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
                 }
                 
                 const byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
+                const blob = new Blob([byteArray], { type: contentType });
+                
+                // Create a download link for the document
+                const url = URL.createObjectURL(blob);
+                
+                // Set the filename with appropriate extension
+                let fileExtension = 'txt';
+                if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                  fileExtension = 'docx';
+                } else if (course.fileType === 'application/msword') {
+                  fileExtension = 'doc';
+                } else if (course.fileType === 'application/pdf') {
+                  fileExtension = 'pdf';
+                }
+                
+                // Use the provided fileName if available, otherwise create a generic one
+                const downloadName = course.fileName && course.fileName.trim() !== '' 
+                  ? (course.fileName.includes('.') ? course.fileName : `${course.fileName}.${fileExtension}`)
+                  : `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = downloadName;
+                
+                // Trigger the download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Cleanup
+                URL.revokeObjectURL(url);
+                
+                toast.success('Download completed successfully');
+              } catch (atobError) {
+                console.error('Download error:', atobError);
+                toast.error('Failed to decode the file. The file data may be corrupted.');
               }
-              
-              const blob = new Blob(byteArrays, { type: contentType });
-              
-              // Create a download link for the document
-              const url = URL.createObjectURL(blob);
-              
-              // Set the filename with appropriate extension
-              let fileExtension = 'txt';
-              if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                fileExtension = 'docx';
-              } else if (course.fileType === 'application/msword') {
-                fileExtension = 'doc';
-              } else if (course.fileType === 'application/pdf') {
-                fileExtension = 'pdf';
-              }
-              
-              // Use the provided fileName if available, otherwise create a generic one
-              const downloadName = course.fileName && course.fileName.trim() !== '' 
-                ? (course.fileName.includes('.') ? course.fileName : `${course.fileName}.${fileExtension}`)
-                : `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
-              
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = downloadName;
-              
-              // Trigger the download
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              
-              // Cleanup
-              URL.revokeObjectURL(url);
-              
-              toast.success('Download completed successfully');
             } catch (error) {
               console.error('Download error:', error);
               toast.error('Failed to download file. Please try again.');

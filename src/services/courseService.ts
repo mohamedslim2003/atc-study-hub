@@ -49,19 +49,46 @@ const saveCourses = (courses: Course[]) => {
         category: course.category || 'uncategorized' 
       };
       
-      // For files, we'll store metadata but not the actual content
-      // This solves the problem of corrupted files on download
-      if (courseWithCategory.fileData && courseWithCategory.fileData.length > 10000) {
-        console.log(`Course "${course.title}" has a large file (${course.fileData?.length} bytes), storing metadata only`);
+      // For files, verify the data URI format before storing
+      if (courseWithCategory.fileData) {
+        const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
+        const isValidDataUri = dataUriRegex.test(courseWithCategory.fileData);
         
-        // Store only file metadata and a flag indicating this is a placeholder
-        return {
-          ...courseWithCategory,
-          fileDataPlaceholder: true,
-          originalFileSize: course.fileData.length,
-          // Keep just a small sample of the file data to validate the format
-          fileData: course.fileData.substring(0, 100) + '...'
-        };
+        // If it's not a valid data URI and not already a placeholder, log an error
+        if (!isValidDataUri && !courseWithCategory.fileDataPlaceholder) {
+          console.warn(`Course "${course.title}" has invalid file data format. Storing metadata only.`);
+          return {
+            ...courseWithCategory,
+            fileDataPlaceholder: true,
+            originalFileSize: course.fileData?.length || 0,
+            fileData: null
+          };
+        }
+        
+        // If file is large, store metadata only
+        if (courseWithCategory.fileData.length > 10000) {
+          console.log(`Course "${course.title}" has a large file (${course.fileData?.length} bytes), storing metadata only`);
+          
+          // Extract just the content type from the data URI if possible
+          let contentType = '';
+          if (isValidDataUri) {
+            const matches = courseWithCategory.fileData.match(dataUriRegex);
+            if (matches && matches.length > 1) {
+              contentType = matches[1];
+            }
+          }
+          
+          // Store only file metadata and a flag indicating this is a placeholder
+          return {
+            ...courseWithCategory,
+            fileDataPlaceholder: true,
+            originalFileSize: course.fileData?.length || 0,
+            // Keep just the content type portion of the data URI
+            fileData: isValidDataUri ? 
+              `data:${contentType};base64,TRUNCATED_FOR_STORAGE` : 
+              'INVALID_FORMAT_TRUNCATED'
+          };
+        }
       }
       return courseWithCategory;
     });

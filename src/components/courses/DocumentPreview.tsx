@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
@@ -86,58 +85,68 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               const contentType = matches[1];
               const base64Data = matches[2];
               
-              // Convert Base64 to binary in a more reliable way
-              const byteCharacters = atob(base64Data);
-              const byteArrays = [];
+              // Fix: Clean the base64 string to ensure it's properly formatted
+              const cleanedBase64 = base64Data.replace(/\s/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
               
-              for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-                const slice = byteCharacters.slice(offset, offset + 512);
+              try {
+                // Convert Base64 to binary in a more reliable way
+                const byteCharacters = atob(cleanedBase64);
+                const byteArrays = [];
                 
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) {
-                  byteNumbers[i] = slice.charCodeAt(i);
+                // Process the binary data in smaller chunks to prevent memory issues
+                const chunkSize = 8192; // Process 8KB at a time
+                for (let offset = 0; offset < byteCharacters.length; offset += chunkSize) {
+                  const slice = byteCharacters.slice(offset, Math.min(offset + chunkSize, byteCharacters.length));
+                  
+                  const byteNumbers = new Array(slice.length);
+                  for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                  }
+                  
+                  const byteArray = new Uint8Array(byteNumbers);
+                  byteArrays.push(byteArray);
                 }
                 
-                const byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
-              }
-              
-              const blob = new Blob(byteArrays, { type: contentType });
-              
-              // Create a download link for the document
-              const url = URL.createObjectURL(blob);
-              
-              // Set the filename with appropriate extension
-              let fileExtension = 'txt';
-              if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                fileExtension = 'docx';
-              } else if (fileType === 'application/msword') {
-                fileExtension = 'doc';
-              } else if (fileType === 'application/pdf') {
-                fileExtension = 'pdf';
-              }
-              
-              // Use the provided fileName if available, otherwise create a generic one
-              const downloadName = fileName && fileName.trim() !== '' 
-                ? (fileName.includes('.') ? fileName : `${fileName}.${fileExtension}`)
-                : `document.${fileExtension}`;
-              
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = downloadName;
-              
-              // Trigger the download
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              
-              // Cleanup
-              URL.revokeObjectURL(url);
-              
-              if (hasStorageError) {
-                toast.info('The file was only partially downloaded due to browser storage limitations. Some content may be missing.', { duration: 7000 });
-              } else {
-                toast.success('Download completed successfully');
+                const blob = new Blob(byteArrays, { type: contentType });
+                
+                // Create a download link for the document
+                const url = URL.createObjectURL(blob);
+                
+                // Set the filename with appropriate extension
+                let fileExtension = 'txt';
+                if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                  fileExtension = 'docx';
+                } else if (fileType === 'application/msword') {
+                  fileExtension = 'doc';
+                } else if (fileType === 'application/pdf') {
+                  fileExtension = 'pdf';
+                }
+                
+                // Use the provided fileName if available, otherwise create a generic one
+                const downloadName = fileName && fileName.trim() !== '' 
+                  ? (fileName.includes('.') ? fileName : `${fileName}.${fileExtension}`)
+                  : `document.${fileExtension}`;
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = downloadName;
+                
+                // Trigger the download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Cleanup
+                URL.revokeObjectURL(url);
+                
+                if (hasStorageError) {
+                  toast.info('The file was only partially downloaded due to browser storage limitations. Some content may be missing.', { duration: 7000 });
+                } else {
+                  toast.success('Download completed successfully');
+                }
+              } catch (atobError) {
+                console.error('Download error:', atobError);
+                toast.error('Failed to decode the file. The file data may be corrupted.');
               }
             } catch (error) {
               console.error('Download error:', error);

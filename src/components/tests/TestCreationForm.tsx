@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { Course } from '@/types/course';
+import CourseDocumentSelector from './CourseDocumentSelector';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Question, Option } from '@/types/test';
 
 export interface TestFormData {
   title: string;
@@ -16,21 +21,12 @@ export interface TestFormData {
   duration: number;
   category: 'fundamentals' | 'advanced' | 'airspace' | 'emergency';
   questions: Question[];
+  courseId?: string;
+  courseName?: string;
   file?: File;
   fileData?: string;
   fileType?: string;
-}
-
-interface Question {
-  id: string;
-  text: string;
-  options: Option[];
-  correctOptionId: string;
-}
-
-interface Option {
-  id: string;
-  text: string;
+  fileName?: string;
 }
 
 const TestCreationForm: React.FC<{
@@ -41,6 +37,7 @@ const TestCreationForm: React.FC<{
   const [file, setFile] = useState<File | null>(null);
   const [fileProcessing, setFileProcessing] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentTab, setCurrentTab] = useState<string>('manual');
 
   const form = useForm<TestFormData>({
     defaultValues: {
@@ -67,6 +64,7 @@ const TestCreationForm: React.FC<{
             const base64Data = event.target.result.toString();
             form.setValue('fileData', base64Data);
             form.setValue('fileType', selectedFile.type);
+            form.setValue('fileName', selectedFile.name);
             
             // In a real implementation, you would send this file to your backend
             // to parse the .docx and extract questions + answers
@@ -91,6 +89,26 @@ const TestCreationForm: React.FC<{
         toast.error("Please upload a .docx file");
       }
     }
+  };
+
+  const handleCourseSelected = (course: Course) => {
+    setFileProcessing(true);
+    form.setValue('courseId', course.id);
+    form.setValue('courseName', course.title);
+    form.setValue('fileData', course.fileData);
+    form.setValue('fileType', course.fileType);
+    form.setValue('fileName', course.fileName);
+    
+    // In a real implementation, you would send the document data to your backend
+    // to parse the .docx and extract questions + answers
+    // For now, we'll simulate this with mock questions
+    setTimeout(() => {
+      const mockQuestions = generateMockQuestions();
+      setQuestions(mockQuestions);
+      form.setValue('questions', mockQuestions);
+      setFileProcessing(false);
+      toast.success(`Document from "${course.title}" processed successfully`);
+    }, 2000);
   };
 
   const generateMockQuestions = (): Question[] => {
@@ -301,44 +319,76 @@ const TestCreationForm: React.FC<{
         />
         
         <div className="border rounded-md p-4 space-y-4">
-          <p className="text-sm font-medium">Upload Test Document</p>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex flex-col gap-2">
-              <Input 
-                id="file" 
-                type="file" 
-                onChange={handleFileChange}
-                accept=".docx"
-                className="max-w-64"
-                disabled={fileProcessing}
-              />
-              <p className="text-sm text-muted-foreground">
-                {file ? `File selected: ${file.name}` : 'Upload a .docx file to automatically generate questions'}
-              </p>
-            </div>
+          <h3 className="text-lg font-medium">Questions Source</h3>
+          
+          <Tabs value={currentTab} onValueChange={setCurrentTab}>
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="course">From Course</TabsTrigger>
+              <TabsTrigger value="upload">Upload Document</TabsTrigger>
+              <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+            </TabsList>
             
-            {fileProcessing && (
-              <div className="flex items-center text-primary">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing document...
+            <TabsContent value="course">
+              <CourseDocumentSelector onDocumentSelected={handleCourseSelected} />
+            </TabsContent>
+            
+            <TabsContent value="upload">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex flex-col gap-2">
+                    <Input 
+                      id="file" 
+                      type="file" 
+                      onChange={handleFileChange}
+                      accept=".docx"
+                      className="max-w-64"
+                      disabled={fileProcessing}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      {file ? `File selected: ${file.name}` : 'Upload a .docx file to automatically generate questions'}
+                    </p>
+                  </div>
+                  
+                  {fileProcessing && (
+                    <div className="flex items-center text-primary">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing document...
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
+            </TabsContent>
+            
+            <TabsContent value="manual">
+              <p className="text-sm text-muted-foreground mb-4">
+                Manually create questions and answers for your test.
+              </p>
+              <Button 
+                type="button" 
+                onClick={addQuestion}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Add Question
+              </Button>
+            </TabsContent>
+          </Tabs>
         </div>
         
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Questions</h3>
-            <Button 
-              type="button" 
-              onClick={addQuestion}
-              leftIcon={<Plus className="h-4 w-4" />}
-            >
-              Add Question
-            </Button>
+            {currentTab === 'manual' && (
+              <Button 
+                type="button" 
+                onClick={addQuestion}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Add Question
+              </Button>
+            )}
           </div>
           
           {questions.length === 0 && !fileProcessing && (

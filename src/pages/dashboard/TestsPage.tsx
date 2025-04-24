@@ -59,6 +59,11 @@ const TestsPage: React.FC = () => {
     setSelectedTest(test);
     setShowViewTestDialog(true);
   };
+  
+  const handleCreateTestClick = () => {
+    console.log("Create test button clicked"); // Add debug logging
+    setShowCreateDialog(true);
+  };
 
   // Function to filter tests by search query
   const filteredTests = tests.filter(test => 
@@ -90,7 +95,7 @@ const TestsPage: React.FC = () => {
           {isAdmin && (
             <div className="ml-auto">
               <Button 
-                onClick={() => setShowCreateDialog(true)}
+                onClick={handleCreateTestClick}
                 leftIcon={<Plus className="h-4 w-4" />}
               >
                 Create Test

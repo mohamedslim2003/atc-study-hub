@@ -44,6 +44,8 @@ const CreateTestDialog: React.FC<CreateTestDialogProps> = ({
     onOpenChange(false);
   };
 
+  console.log("CreateTestDialog open state:", open); // Add debug logging
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">

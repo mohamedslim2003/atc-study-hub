@@ -9,7 +9,7 @@ export interface Test {
   courseId?: string;
   courseName?: string;
   fileData?: string;
-  fileType?: string;
+  fileType?: string;  // Can be docx, pdf, pptx
   fileName?: string;
   createdAt: Date;
   updatedAt: Date;

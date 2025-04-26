@@ -22,10 +22,28 @@ const CreateTestDialog: React.FC<CreateTestDialogProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Check if we have file data
+      if (data.fileData) {
+        const fileType = data.fileType || 'unknown';
+        const fileExt = data.fileName?.split('.').pop()?.toLowerCase() || '';
+        
+        console.log(`Processing ${fileExt} file...`);
+        
+        // In a real implementation, we would send the file to the server
+        // for processing and extracting questions
+      }
+      
       // Create the test in our service
       const newTest = createTest(data);
       
-      toast.success("Test created successfully");
+      // Show a more detailed success message
+      if (data.fileData) {
+        const fileExt = data.fileName?.split('.').pop()?.toLowerCase();
+        toast.success(`Test created successfully from ${fileExt} file`);
+      } else {
+        toast.success("Test created successfully");
+      }
+      
       onOpenChange(false);
       
       // Call the callback if provided
@@ -44,7 +62,7 @@ const CreateTestDialog: React.FC<CreateTestDialogProps> = ({
     onOpenChange(false);
   };
 
-  console.log("CreateTestDialog open state:", open); // Add debug logging
+  console.log("CreateTestDialog open state:", open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,7 @@ import { Card } from '@/components/ui-custom/Card';
 import { useForm } from 'react-hook-form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Upload, FileText } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, File } from 'lucide-react';
 import { toast } from 'sonner';
 import { Course } from '@/types/course';
 import CourseDocumentSelector from './CourseDocumentSelector';
@@ -53,7 +52,14 @@ const TestCreationForm: React.FC<{
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       
-      if (selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      // Accept .docx, .pdf, and .pptx files
+      const acceptedFileTypes = [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+        'application/pdf', // .pdf
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation' // .pptx
+      ];
+      
+      if (acceptedFileTypes.includes(selectedFile.type)) {
         setFile(selectedFile);
         setFileProcessing(true);
         
@@ -67,14 +73,16 @@ const TestCreationForm: React.FC<{
             form.setValue('fileName', selectedFile.name);
             
             // In a real implementation, you would send this file to your backend
-            // to parse the .docx and extract questions + answers
-            // For now, we'll simulate this with mock questions
+            // to parse the file and extract questions + answers
+            
+            // For the demo, we'll simulate processing with different messages based on file type
+            const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
             setTimeout(() => {
-              const mockQuestions = generateMockQuestions();
+              const mockQuestions = generateMockQuestions(fileExtension);
               setQuestions(mockQuestions);
               form.setValue('questions', mockQuestions);
               setFileProcessing(false);
-              toast.success("File processed successfully");
+              toast.success(`${fileExtension?.toUpperCase()} file processed successfully`);
             }, 2000);
           }
         };
@@ -86,7 +94,7 @@ const TestCreationForm: React.FC<{
         
         reader.readAsDataURL(selectedFile);
       } else {
-        toast.error("Please upload a .docx file");
+        toast.error("Please upload a .docx, .pdf, or .pptx file");
       }
     }
   };
@@ -111,11 +119,14 @@ const TestCreationForm: React.FC<{
     }, 2000);
   };
 
-  const generateMockQuestions = (): Question[] => {
+  const generateMockQuestions = (fileType?: string): Question[] => {
+    // Generate different question content based on file type for demo purposes
+    const questionPrefix = fileType ? `[${fileType.toUpperCase()}] Question ` : "Question ";
+    
     // Generate 5 mock questions with 4 options each
     return Array.from({ length: 5 }, (_, i) => ({
       id: `q${i + 1}`,
-      text: `Question ${i + 1}: What is the correct procedure for ${['runway incursion', 'weather deviation', 'communication failure', 'emergency descent', 'traffic conflict'][i]}?`,
+      text: `${questionPrefix}${i + 1}: What is the correct procedure for ${['runway incursion', 'weather deviation', 'communication failure', 'emergency descent', 'traffic conflict'][i]}?`,
       options: Array.from({ length: 4 }, (_, j) => ({
         id: `q${i + 1}o${j + 1}`,
         text: `Option ${j + 1}: ${['Contact tower immediately', 'Follow standard protocol', 'Maintain current altitude', 'Declare emergency'][j]}`
@@ -209,6 +220,21 @@ const TestCreationForm: React.FC<{
       data.fileType = file.type;
     }
     onSubmit(data);
+  };
+
+  // Helper to get file icon based on file type
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch (extension) {
+      case 'pdf':
+        return <File className="h-4 w-4 text-red-500" />;
+      case 'pptx':
+        return <File className="h-4 w-4 text-orange-500" />;
+      case 'docx':
+      default:
+        return <FileText className="h-4 w-4 text-blue-500" />;
+    }
   };
 
   return (
@@ -340,12 +366,19 @@ const TestCreationForm: React.FC<{
                       id="file" 
                       type="file" 
                       onChange={handleFileChange}
-                      accept=".docx"
+                      accept=".docx,.pdf,.pptx"
                       className="max-w-64"
                       disabled={fileProcessing}
                     />
                     <p className="text-sm text-muted-foreground">
-                      {file ? `File selected: ${file.name}` : 'Upload a .docx file to automatically generate questions'}
+                      {file ? (
+                        <span className="flex items-center">
+                          {getFileIcon(file.name)}
+                          <span className="ml-1">File selected: {file.name}</span>
+                        </span>
+                      ) : (
+                        'Upload a .docx, .pdf, or .pptx file to automatically generate questions'
+                      )}
                     </p>
                   </div>
                   
@@ -395,7 +428,7 @@ const TestCreationForm: React.FC<{
             <Card className="p-6 bg-muted/50 flex flex-col items-center justify-center space-y-2">
               <FileText className="h-12 w-12 text-muted-foreground/70" />
               <p className="text-center text-muted-foreground">
-                No questions added yet. Upload a .docx file to automatically generate questions or add them manually.
+                No questions added yet. Upload a file to automatically generate questions or add them manually.
               </p>
             </Card>
           )}

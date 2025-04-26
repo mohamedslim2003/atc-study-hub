@@ -63,12 +63,13 @@ const CreateTestDialog: React.FC<CreateTestDialogProps> = ({
     onOpenChange(false);
   };
 
-  // Debug logs to help identify the issue
-  console.log("CreateTestDialog - open state:", open);
-  console.log("CreateTestDialog - rendering with open:", open);
+  // Force the dialog to be rendered with the correct open state
+  React.useEffect(() => {
+    console.log("CreateTestDialog - open state updated:", open);
+  }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogTitle>Create New Test</DialogTitle>
         <TestCreationForm 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { FileText, Search, Filter, Trophy, Clock, BarChart, Calendar, Eye, Download, Plus } from 'lucide-react';
@@ -61,8 +60,9 @@ const TestsPage: React.FC = () => {
   };
   
   const handleCreateTestClick = () => {
-    console.log("Create test button clicked"); // Add debug logging
+    console.log("Create test button clicked"); // Debug logging
     setShowCreateDialog(true);
+    console.log("showCreateDialog state set to:", true); // More debug logging
   };
 
   // Function to filter tests by search query
@@ -78,6 +78,8 @@ const TestsPage: React.FC = () => {
     ? Math.round(submissions.reduce((sum, sub) => sum + sub.score, 0) / submissions.length)
     : 0;
   const nextScheduledTest = tests.length > 0 ? "Today" : "No tests available";
+
+  console.log("Rendering TestsPage, showCreateDialog:", showCreateDialog); // Debug logging
 
   return (
     <div className="animate-enter">
@@ -295,7 +297,10 @@ const TestsPage: React.FC = () => {
       {/* Create Test Dialog */}
       <CreateTestDialog 
         open={showCreateDialog} 
-        onOpenChange={setShowCreateDialog} 
+        onOpenChange={(open) => {
+          console.log("Dialog onOpenChange called with:", open); // Debug
+          setShowCreateDialog(open);
+        }}
         onTestCreated={handleTestCreated}
       />
     </div>

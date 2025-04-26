@@ -1,28 +1,56 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
-import { FileText, Search, Filter, Trophy, Clock, BarChart, Calendar, Eye, Download, Plus } from 'lucide-react';
+import { FileText, Search, Filter, Trophy, Clock, BarChart, Calendar, Eye, Download, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui-custom/Button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import CreateTestDialog from '@/components/tests/CreateTestDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { Progress } from '@/components/ui/progress';
-import { getTests, getUserTestSubmissions } from '@/services/testService';
-import { Test, TestSubmission } from '@/types/test';
+import { getTests, getUserTestSubmissions, createTest } from '@/services/testService';
+import { Test, TestSubmission, Question, Option } from '@/types/test';
 import TestView from '@/components/tests/TestView';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { useForm } from 'react-hook-form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+
+interface QuickTestFormData {
+  title: string;
+  description: string;
+  duration: number;
+  category: 'fundamentals' | 'advanced' | 'airspace' | 'emergency';
+  question: string;
+  options: string[];
+  correctOptionIndex: number;
+}
 
 const TestsPage: React.FC = () => {
   const [showViewTestDialog, setShowViewTestDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTest, setSelectedTest] = useState<Test | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [tests, setTests] = useState<Test[]>([]);
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { isAdmin, user } = useAuth();
+
+  const form = useForm<QuickTestFormData>({
+    defaultValues: {
+      title: '',
+      description: '',
+      duration: 15,
+      category: 'fundamentals',
+      question: '',
+      options: ['', '', '', ''],
+      correctOptionIndex: 0
+    }
+  });
 
   useEffect(() => {
     const fetchData = () => {
@@ -46,11 +74,43 @@ const TestsPage: React.FC = () => {
     fetchData();
   }, [user]);
 
-  const handleTestCreated = () => {
-    // Refresh the tests list
-    const allTests = getTests();
-    setTests(allTests);
-    toast.success("Test list updated");
+  const handleQuickCreate = (data: QuickTestFormData) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Create a question from the form data
+      const options: Option[] = data.options.map((text, index) => ({
+        id: `q1o${index + 1}`,
+        text
+      }));
+
+      const question: Question = {
+        id: 'q1',
+        text: data.question,
+        options,
+        correctOptionId: `q1o${data.correctOptionIndex + 1}`
+      };
+
+      // Create the test with our single question
+      const newTest = createTest({
+        title: data.title,
+        description: data.description,
+        duration: data.duration,
+        category: data.category,
+        questions: [question]
+      });
+      
+      // Refresh the tests list
+      setTests([...tests, newTest]);
+      toast.success("Test created successfully!");
+      setShowQuickCreate(false);
+      form.reset();
+    } catch (error) {
+      console.error("Error creating test:", error);
+      toast.error("Failed to create test");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Function to handle test view
@@ -60,9 +120,7 @@ const TestsPage: React.FC = () => {
   };
   
   const handleCreateTestClick = () => {
-    console.log("Create test button clicked"); // Debug logging
-    setShowCreateDialog(true);
-    console.log("showCreateDialog state set to:", true); // More debug logging
+    setShowQuickCreate(!showQuickCreate);
   };
 
   // Function to filter tests by search query
@@ -78,8 +136,6 @@ const TestsPage: React.FC = () => {
     ? Math.round(submissions.reduce((sum, sub) => sum + sub.score, 0) / submissions.length)
     : 0;
   const nextScheduledTest = tests.length > 0 ? "Today" : "No tests available";
-
-  console.log("Rendering TestsPage, showCreateDialog:", showCreateDialog); // Debug logging
 
   return (
     <div className="animate-enter">
@@ -174,6 +230,182 @@ const TestsPage: React.FC = () => {
         </Card>
       </div>
 
+      {/* Quick Create Form - Only shown when Create Test is clicked */}
+      {showQuickCreate && isAdmin && (
+        <Card className="mb-8">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Quick Create Test</CardTitle>
+            <Button variant="ghost" size="icon" onClick={() => setShowQuickCreate(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleQuickCreate)} className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Test Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter test title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Duration (minutes)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min={1} 
+                            {...field} 
+                            onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter test description" 
+                          className="min-h-16"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Category</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col md:flex-row gap-4"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="fundamentals" id="fundamentals" />
+                            </FormControl>
+                            <FormLabel htmlFor="fundamentals" className="font-normal cursor-pointer">
+                              Fundamentals
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="advanced" id="advanced" />
+                            </FormControl>
+                            <FormLabel htmlFor="advanced" className="font-normal cursor-pointer">
+                              Advanced
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="airspace" id="airspace" />
+                            </FormControl>
+                            <FormLabel htmlFor="airspace" className="font-normal cursor-pointer">
+                              Airspace
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="emergency" id="emergency" />
+                            </FormControl>
+                            <FormLabel htmlFor="emergency" className="font-normal cursor-pointer">
+                              Emergency
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="text-lg font-medium">Question</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="question"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Question Text</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter your question here..." 
+                            className="min-h-16"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Options</h4>
+                    
+                    {[0, 1, 2, 3].map((index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <Checkbox 
+                          id={`option-${index}`} 
+                          checked={form.watch('correctOptionIndex') === index}
+                          onCheckedChange={() => form.setValue('correctOptionIndex', index)}
+                        />
+                        <Input
+                          placeholder={`Option ${index + 1}`}
+                          value={form.watch('options')[index]}
+                          onChange={(e) => {
+                            const newOptions = [...form.watch('options')];
+                            newOptions[index] = e.target.value;
+                            form.setValue('options', newOptions);
+                          }}
+                          className="flex-1"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button 
+                    type="submit"
+                    isLoading={isSubmitting}
+                  >
+                    Create Test
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Available Tests Section */}
       <Card className="mb-8">
         <CardHeader>
@@ -199,7 +431,7 @@ const TestsPage: React.FC = () => {
                 </p>
                 {isAdmin && (
                   <Button 
-                    onClick={() => setShowCreateDialog(true)}
+                    onClick={() => setShowQuickCreate(true)}
                     className="mt-2"
                     leftIcon={<Plus className="h-4 w-4" />}
                   >
@@ -293,16 +525,6 @@ const TestsPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Create Test Dialog */}
-      <CreateTestDialog 
-        open={showCreateDialog} 
-        onOpenChange={(open) => {
-          console.log("Dialog onOpenChange called with:", open); // Debug
-          setShowCreateDialog(open);
-        }}
-        onTestCreated={handleTestCreated}
-      />
     </div>
   );
 };

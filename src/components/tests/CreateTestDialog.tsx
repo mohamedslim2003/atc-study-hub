@@ -44,6 +44,7 @@ const CreateTestDialog: React.FC<CreateTestDialogProps> = ({
         toast.success("Test created successfully");
       }
       
+      // Make sure to close the dialog after test creation
       onOpenChange(false);
       
       // Call the callback if provided
@@ -62,7 +63,9 @@ const CreateTestDialog: React.FC<CreateTestDialogProps> = ({
     onOpenChange(false);
   };
 
-  console.log("CreateTestDialog open state:", open);
+  // Debug logs to help identify the issue
+  console.log("CreateTestDialog - open state:", open);
+  console.log("CreateTestDialog - rendering with open:", open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

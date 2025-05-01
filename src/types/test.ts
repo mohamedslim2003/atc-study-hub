@@ -4,7 +4,7 @@ export interface Test {
   title: string;
   description: string;
   duration: number;
-  category: 'fundamentals' | 'advanced' | 'airspace' | 'emergency';
+  category: 'fundamentals' | 'advanced' | 'airspace' | 'emergency' | 'aerodrome' | 'approach' | 'ccr' | 'uncategorized';
   questions: Question[];
   courseId?: string;
   courseName?: string;

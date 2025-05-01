@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Test, Question, Answer } from '@/types/test';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
@@ -32,17 +32,30 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
   
   const [timeRemaining, setTimeRemaining] = useState(test.duration * 60); // in seconds
   const [timerRunning, setTimerRunning] = useState(true);
+  const [isTimeWarning, setIsTimeWarning] = useState(false);
   
   // Handle timer
-  React.useEffect(() => {
+  useEffect(() => {
     if (!timerRunning) return;
     
     const timer = setInterval(() => {
       setTimeRemaining(prev => {
+        // Set warning state when 5 minutes or less remain
+        if (prev <= 300 && !isTimeWarning) {
+          setIsTimeWarning(true);
+          toast.warning("5 minutes remaining!");
+        }
+        
+        // When 1 minute remains, show another warning
+        if (prev === 60) {
+          toast.warning("1 minute remaining!");
+        }
+        
         if (prev <= 1) {
           clearInterval(timer);
           setTimerRunning(false);
           handleSubmitTest();
+          toast.error("Time's up! Your test has been submitted.");
           return 0;
         }
         return prev - 1;
@@ -50,7 +63,7 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [timerRunning]);
+  }, [timerRunning, isTimeWarning]);
   
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -140,6 +153,8 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
   
   const currentQuestion = test.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / test.questions.length) * 100;
+  const answeredQuestions = Object.keys(selectedAnswers).length;
+  const totalQuestions = test.questions.length;
 
   // Test results view
   if (testComplete && testResults) {
@@ -230,8 +245,8 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
       {/* Timer and progress */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <span className={`font-mono ${timeRemaining < 60 ? 'text-red-600 animate-pulse' : ''}`}>
+          <Clock className={`h-4 w-4 ${isTimeWarning ? 'text-red-500' : 'text-muted-foreground'}`} />
+          <span className={`font-mono ${isTimeWarning ? 'text-red-600 animate-pulse' : ''}`}>
             {formatTime(timeRemaining)}
           </span>
         </div>
@@ -242,6 +257,12 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
       </div>
       
       <Progress value={progress} className="h-1" />
+      
+      {/* Progress stats */}
+      <div className="flex justify-between text-sm text-muted-foreground">
+        <div>Answered: {answeredQuestions}/{totalQuestions}</div>
+        <div>Remaining: {totalQuestions - answeredQuestions}</div>
+      </div>
       
       {/* Current question */}
       <Card className="p-6">
@@ -283,6 +304,26 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
             Submit Test
           </Button>
         )}
+      </div>
+
+      {/* Quick navigation */}
+      <div className="pt-4">
+        <h4 className="text-sm font-medium mb-2">Quick Navigation</h4>
+        <div className="flex flex-wrap gap-2">
+          {test.questions.map((_, index) => (
+            <Button 
+              key={index} 
+              variant="outline"
+              size="sm"
+              className={`w-10 h-10 p-0 ${
+                selectedAnswers[test.questions[index].id] ? 'bg-primary/10' : ''
+              } ${currentQuestionIndex === index ? 'ring-2 ring-primary' : ''}`}
+              onClick={() => setCurrentQuestionIndex(index)}
+            >
+              {index + 1}
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );

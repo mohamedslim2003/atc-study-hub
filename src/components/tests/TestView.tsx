@@ -5,15 +5,10 @@ import { submitTest } from '@/services/testService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-
-// Import our refactored components
-import TestResults from '@/components/tests/TestResults';
-import TestTimer from '@/components/tests/TestTimer';
-import QuestionDisplay from '@/components/tests/QuestionDisplay';
-import QuestionNavigation from '@/components/tests/QuestionNavigation';
-import TestControls from '@/components/tests/TestControls';
-import TestProgress from '@/components/tests/TestProgress';
 import { useTestTimer } from '@/hooks/useTestTimer';
+import TestHeader from './TestHeader';
+import TestContent from './TestContent';
+import TestResultsDisplay from './TestResultsDisplay';
 
 interface TestViewProps {
   test: Test;
@@ -116,42 +111,36 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
   const answeredQuestions = Object.keys(selectedAnswers).length;
   const totalQuestions = test.questions.length;
 
-  // Test results view
+  // Display test results if test is complete
   if (testComplete && testResults) {
-    return <TestResults test={test} testResults={testResults} />;
+    return <TestResultsDisplay 
+      test={test} 
+      testResults={testResults} 
+      testComplete={testComplete} 
+    />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <TestTimer timeRemaining={timeRemaining} isTimeWarning={isTimeWarning} />
-      </div>
-      
-      <TestProgress
+      <TestHeader 
+        timeRemaining={timeRemaining}
+        isTimeWarning={isTimeWarning}
         currentQuestionIndex={currentQuestionIndex}
         totalQuestions={totalQuestions}
         answeredQuestions={answeredQuestions}
       />
       
-      <QuestionDisplay
-        question={currentQuestion}
-        selectedOptionId={selectedAnswers[currentQuestion.id] || ''}
-        onOptionSelect={handleAnswerSelection}
-      />
-      
-      <TestControls
+      <TestContent 
+        currentQuestion={currentQuestion}
+        currentQuestionIndex={currentQuestionIndex}
+        totalQuestions={totalQuestions}
+        selectedAnswers={selectedAnswers}
+        questions={test.questions}
+        onAnswerSelection={handleAnswerSelection}
         onPrevious={handlePrevious}
         onNext={handleNext}
         onSubmit={handleSubmitTest}
-        isFirstQuestion={currentQuestionIndex === 0}
-        isLastQuestion={currentQuestionIndex === test.questions.length - 1}
         isSubmitting={isSubmitting}
-      />
-
-      <QuestionNavigation
-        questions={test.questions}
-        currentIndex={currentQuestionIndex}
-        answeredQuestions={selectedAnswers}
         onNavigate={setCurrentQuestionIndex}
       />
     </div>

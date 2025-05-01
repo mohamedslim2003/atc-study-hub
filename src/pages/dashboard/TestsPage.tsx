@@ -11,7 +11,7 @@ import { Test, TestSubmission } from '@/types/test';
 import TestView from '@/components/tests/TestView';
 import { useNavigate } from 'react-router-dom';
 
-// Import our new components
+// Import our components
 import TestStats from '@/components/tests/TestStats';
 import TestCategorySelection from '@/components/tests/TestCategorySelection';
 import QuickTestForm, { QuickTestFormData } from '@/components/tests/QuickTestForm';
@@ -34,11 +34,19 @@ const TestsPage: React.FC = () => {
   const navigate = useNavigate();
   const { generateQuestionsForCategory } = useTestGeneration();
 
+  // Debug logging
   useEffect(() => {
-    const fetchData = () => {
+    console.log("Current tests:", tests);
+    console.log("Selected category:", selectedCategory);
+    console.log("Show view test dialog:", showViewTestDialog);
+  }, [tests, selectedCategory, showViewTestDialog]);
+
+  useEffect(() => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
         const allTests = getTests();
+        console.log("Fetched tests:", allTests);
         setTests(allTests);
         
         if (user) {
@@ -57,15 +65,25 @@ const TestsPage: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
+    // Log when this effect runs
+    console.log("Category selection effect running with category:", selectedCategory);
+    
     // Check if we need to create tests for categories that don't have them
-    if (!isAdmin && selectedCategory && tests.length > 0) {
+    if (selectedCategory && !isAdmin) {
+      console.log("Processing category selection:", selectedCategory);
+      console.log("Current tests:", tests);
+      
+      // Find tests for the selected category
       const categoryTests = tests.filter(test => test.category === selectedCategory);
+      console.log("Found category tests:", categoryTests);
       
       if (categoryTests.length === 0) {
         // Create a test for this category automatically
+        console.log("No tests found for category, generating new test");
         generateTestForCategory(selectedCategory);
       } else {
         // Use the first test found for this category
+        console.log("Using existing test:", categoryTests[0]);
         setSelectedTest(categoryTests[0]);
         setShowViewTestDialog(true);
       }
@@ -84,6 +102,8 @@ const TestsPage: React.FC = () => {
         category: category,
         questions: questions
       });
+      
+      console.log("New test created:", newTest);
       
       // Add the new test to our state
       setTests(prevTests => [...prevTests, newTest]);
@@ -147,6 +167,7 @@ const TestsPage: React.FC = () => {
   };
 
   const handleCategorySelect = (category: 'aerodrome' | 'approach' | 'ccr') => {
+    console.log("Category selected:", category);
     setSelectedCategory(category);
   };
 
@@ -238,7 +259,10 @@ const TestsPage: React.FC = () => {
       <Dialog 
         open={showViewTestDialog} 
         onOpenChange={(open) => {
-          if (!open) setSelectedTest(null);
+          if (!open) {
+            setSelectedTest(null);
+            console.log("Closing test dialog");
+          }
           setShowViewTestDialog(open);
         }}
       >

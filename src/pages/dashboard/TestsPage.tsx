@@ -97,7 +97,7 @@ const TestsPage: React.FC = () => {
     try {
       const newTest = createTest({
         title: `${category.charAt(0).toUpperCase() + category.slice(1)} Test`,
-        description: `30-question test on ${category} topics with a 30-minute time limit.`,
+        description: `50-question test on ${category} topics with a 30-minute time limit.`,
         duration: 30, // 30 minutes
         category: category,
         questions: questions

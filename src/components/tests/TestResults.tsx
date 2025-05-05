@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom
 import { Button } from '@/components/ui-custom/Button';
 import { Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTestGeneration } from '@/hooks/useTestGeneration';
 
 interface TestResultsProps {
   test: Test;
@@ -17,6 +18,14 @@ interface TestResultsProps {
 
 const TestResults: React.FC<TestResultsProps> = ({ test, testResults }) => {
   const navigate = useNavigate();
+  const { assessLevel } = useTestGeneration();
+  
+  // Calculate score on a scale of 0-20
+  const correctAnswers = testResults.answers.filter(a => a.isCorrect).length;
+  const scoreOutOf20 = Math.round((correctAnswers / testResults.totalQuestions) * 20);
+  
+  // Get level assessment
+  const levelAssessment = assessLevel(scoreOutOf20);
 
   return (
     <div className="space-y-8 animate-enter">
@@ -30,10 +39,23 @@ const TestResults: React.FC<TestResultsProps> = ({ test, testResults }) => {
               <Trophy className="h-12 w-12 text-primary" />
             </div>
             <div className="text-center">
-              <h2 className="text-3xl font-bold">{Math.round(testResults.score)}%</h2>
+              <h2 className="text-3xl font-bold">{scoreOutOf20}/20</h2>
               <p className="text-muted-foreground">
-                {testResults.answers.filter(a => a.isCorrect).length} out of {testResults.totalQuestions} correct
+                {correctAnswers} out of {testResults.totalQuestions} correct
               </p>
+              <div className="mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                style={{
+                  backgroundColor: levelAssessment.level === 4 ? "rgb(34, 197, 94, 0.1)" :
+                                  levelAssessment.level === 3 ? "rgb(59, 130, 246, 0.1)" :
+                                  levelAssessment.level === 2 ? "rgb(245, 158, 11, 0.1)" :
+                                  "rgb(239, 68, 68, 0.1)",
+                  color: levelAssessment.level === 4 ? "rgb(34, 197, 94)" :
+                         levelAssessment.level === 3 ? "rgb(59, 130, 246)" :
+                         levelAssessment.level === 2 ? "rgb(245, 158, 11)" :
+                         "rgb(239, 68, 68)"
+                }}>
+                Level {levelAssessment.level}: {levelAssessment.description}
+              </div>
             </div>
           </div>
           

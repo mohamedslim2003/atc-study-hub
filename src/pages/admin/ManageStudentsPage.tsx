@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { getAllUsers, updateUserGrades, getUserById, debugLocalStorage } from '@/utils/userUtils';
 import { toast } from 'sonner';
 import { User, GraduationCap, Users, Search, ArrowUpDown, Mail, Edit } from 'lucide-react';
+import { useTestGeneration } from '@/hooks/useTestGeneration';
 
 // Extended user type with grades
 type UserWithGrades = {
@@ -45,6 +46,7 @@ const ManageStudentsPage: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentStudent, setCurrentStudent] = useState<UserWithGrades | null>(null);
   const [editedGrades, setEditedGrades] = useState<{[key: string]: number}>({});
+  const { assessLevel } = useTestGeneration();
 
   useEffect(() => {
     // Load all students
@@ -101,7 +103,7 @@ const ManageStudentsPage: React.FC = () => {
 
   const handleGradeChange = (testId: string, value: string) => {
     const numValue = parseInt(value, 10);
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= 100) {
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 20) {
       setEditedGrades(prev => ({
         ...prev,
         [testId]: numValue
@@ -130,6 +132,18 @@ const ManageStudentsPage: React.FC = () => {
     }
   };
 
+  // Helper to get the level badge color
+  const getLevelBadgeColor = (score: number) => {
+    const { level } = assessLevel(score);
+    switch(level) {
+      case 1: return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+      case 2: return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+      case 3: return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+      case 4: return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+      default: return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
+
   return (
     <div className="animate-enter space-y-6">
       <header>
@@ -153,14 +167,33 @@ const ManageStudentsPage: React.FC = () => {
               <CardTitle>Students</CardTitle>
               <CardDescription>Total: {students.length} registered students</CardDescription>
             </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search students..."
-                className="pl-10 w-64"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex items-center space-x-4">
+              <div className="bg-muted/30 p-3 rounded-md">
+                <div className="text-xs text-muted-foreground mb-1">Grading Scale</div>
+                <div className="flex space-x-2">
+                  <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                    L1: ≤7
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                    L2: 8-12
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                    L3: 13-16
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    L4: 17-20
+                  </span>
+                </div>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search students..."
+                  className="pl-10 w-64"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -252,9 +285,36 @@ const ManageStudentsPage: React.FC = () => {
                           {student.email}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">{student.grades?.test1 || 'N/A'}</TableCell>
-                      <TableCell className="text-right">{student.grades?.test2 || 'N/A'}</TableCell>
-                      <TableCell className="text-right">{student.grades?.test3 || 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        {student.grades?.test1 !== undefined ? (
+                          <div className="flex justify-end items-center">
+                            <span className={`mr-1 px-2 py-0.5 rounded-full text-xs ${getLevelBadgeColor(student.grades.test1)}`}>
+                              L{assessLevel(student.grades.test1).level}
+                            </span>
+                            <span>{student.grades.test1}/20</span>
+                          </div>
+                        ) : 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {student.grades?.test2 !== undefined ? (
+                          <div className="flex justify-end items-center">
+                            <span className={`mr-1 px-2 py-0.5 rounded-full text-xs ${getLevelBadgeColor(student.grades.test2)}`}>
+                              L{assessLevel(student.grades.test2).level}
+                            </span>
+                            <span>{student.grades.test2}/20</span>
+                          </div>
+                        ) : 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {student.grades?.test3 !== undefined ? (
+                          <div className="flex justify-end items-center">
+                            <span className={`mr-1 px-2 py-0.5 rounded-full text-xs ${getLevelBadgeColor(student.grades.test3)}`}>
+                              L{assessLevel(student.grades.test3).level}
+                            </span>
+                            <span>{student.grades.test3}/20</span>
+                          </div>
+                        ) : 'N/A'}
+                      </TableCell>
                       <TableCell>
                         <Button 
                           variant="outline" 
@@ -312,39 +372,54 @@ const ManageStudentsPage: React.FC = () => {
               
               <div className="border-t pt-4 space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="test1">Test 1 Score (0-100)</Label>
+                  <Label htmlFor="test1">Test 1 Score (0-20)</Label>
                   <Input
                     id="test1"
                     type="number"
                     min="0"
-                    max="100"
+                    max="20"
                     value={editedGrades.test1 || 0}
                     onChange={(e) => handleGradeChange('test1', e.target.value)}
                   />
+                  {editedGrades.test1 !== undefined && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Level: {assessLevel(editedGrades.test1).level} - {assessLevel(editedGrades.test1).description}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="test2">Test 2 Score (0-100)</Label>
+                  <Label htmlFor="test2">Test 2 Score (0-20)</Label>
                   <Input
                     id="test2"
                     type="number"
                     min="0"
-                    max="100"
+                    max="20"
                     value={editedGrades.test2 || 0}
                     onChange={(e) => handleGradeChange('test2', e.target.value)}
                   />
+                  {editedGrades.test2 !== undefined && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Level: {assessLevel(editedGrades.test2).level} - {assessLevel(editedGrades.test2).description}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="test3">Test 3 Score (0-100)</Label>
+                  <Label htmlFor="test3">Test 3 Score (0-20)</Label>
                   <Input
                     id="test3"
                     type="number"
                     min="0"
-                    max="100"
+                    max="20"
                     value={editedGrades.test3 || 0}
                     onChange={(e) => handleGradeChange('test3', e.target.value)}
                   />
+                  {editedGrades.test3 !== undefined && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Level: {assessLevel(editedGrades.test3).level} - {assessLevel(editedGrades.test3).description}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

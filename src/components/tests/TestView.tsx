@@ -9,6 +9,7 @@ import { useTestTimer } from '@/hooks/useTestTimer';
 import TestHeader from './TestHeader';
 import TestContent from './TestContent';
 import TestResultsDisplay from './TestResultsDisplay';
+import { useTestGeneration } from '@/hooks/useTestGeneration';
 
 interface TestViewProps {
   test: Test;
@@ -27,6 +28,8 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
     totalQuestions: number;
     answers: Answer[];
   } | null>(null);
+  
+  const { assessLevel } = useTestGeneration();
   
   const handleSubmitTest = () => {
     if (!user) {
@@ -50,7 +53,8 @@ const TestView: React.FC<TestViewProps> = ({ test, onComplete }) => {
     });
     
     const correctAnswers = answers.filter(a => a.isCorrect).length;
-    const score = (correctAnswers / test.questions.length) * 100;
+    // Calculate score on a scale of 0-20
+    const score = (correctAnswers / test.questions.length) * 20;
     
     try {
       // Submit the test

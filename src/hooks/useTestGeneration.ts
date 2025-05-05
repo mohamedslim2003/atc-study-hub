@@ -1,3 +1,4 @@
+
 import { Question, Option } from '@/types/test';
 
 type CategoryType = 'aerodrome' | 'approach' | 'ccr';
@@ -920,14 +921,14 @@ export const useTestGeneration = () => {
       ]
     };
     
-    // Select 30 questions for this category
+    // Select 50 questions for this category (instead of 30)
     const categoryQuestions = questionsByCategory[category] || [];
     if (categoryQuestions.length === 0) {
       console.error(`No questions available for category: ${category}`);
       return questions;
     }
     
-    for (let i = 0; i < 30 && i < categoryQuestions.length; i++) {
+    for (let i = 0; i < 50 && i < categoryQuestions.length; i++) {
       const q = categoryQuestions[i];
       
       // Create question object
@@ -949,5 +950,18 @@ export const useTestGeneration = () => {
     return questions;
   };
 
-  return { generateQuestionsForCategory };
+  // Add the level assessment function to determine the level based on score
+  const assessLevel = (score: number): {level: number, description: string} => {
+    if (score <= 7) {
+      return { level: 1, description: "Basic knowledge" };
+    } else if (score <= 12) {
+      return { level: 2, description: "Intermediate knowledge" };
+    } else if (score <= 16) {
+      return { level: 3, description: "Advanced knowledge" };
+    } else {
+      return { level: 4, description: "Expert knowledge" };
+    }
+  };
+
+  return { generateQuestionsForCategory, assessLevel };
 };

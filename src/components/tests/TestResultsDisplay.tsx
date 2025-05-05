@@ -9,15 +9,19 @@ interface TestResultsDisplayProps {
     score: number;
     totalQuestions: number;
     answers: Answer[];
-  } | null;
+  };
   testComplete: boolean;
 }
 
-const TestResultsDisplay: React.FC<TestResultsDisplayProps> = ({ test, testResults, testComplete }) => {
+const TestResultsDisplay: React.FC<TestResultsDisplayProps> = ({ 
+  test, 
+  testResults,
+  testComplete 
+}) => {
   if (!testComplete || !testResults) {
     return null;
   }
-  
+
   return <TestResults test={test} testResults={testResults} />;
 };
 

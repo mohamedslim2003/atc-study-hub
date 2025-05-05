@@ -34,9 +34,12 @@ export function useTestManagement() {
           const userSubmissions = getUserTestSubmissions(user.id);
           setSubmissions(userSubmissions);
         }
+        
+        // Add toast notification for successful loading
+        toast.success("Tests loaded successfully");
       } catch (error) {
         console.error("Error fetching tests:", error);
-        toast.error("Failed to load tests");
+        toast.error("Failed to load tests. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -59,12 +62,14 @@ export function useTestManagement() {
       if (categoryTests.length === 0) {
         // Create a test for this category automatically
         console.log("No tests found for category, generating new test");
+        toast.info(`Generating ${selectedCategory} test. This may take a moment...`);
         generateTestForCategory(selectedCategory);
       } else {
         // Use the first test found for this category
         console.log("Using existing test:", categoryTests[0]);
         setSelectedTest(categoryTests[0]);
         setShowViewTestDialog(true);
+        toast.info(`${selectedCategory} test loaded`);
       }
     }
   }, [selectedCategory, tests, isAdmin]);
@@ -94,12 +99,13 @@ export function useTestManagement() {
       toast.success(`${category.charAt(0).toUpperCase() + category.slice(1)} test created successfully!`);
     } catch (error) {
       console.error("Error creating test:", error);
-      toast.error(`Failed to create ${category} test`);
+      toast.error(`Failed to create ${category} test. Please try again.`);
     }
   };
 
   const handleQuickCreate = (data: QuickTestFormData) => {
     setIsSubmitting(true);
+    toast.info("Creating test...");
     
     try {
       // Create a question from the form data
@@ -126,11 +132,11 @@ export function useTestManagement() {
       
       // Refresh the tests list
       setTests(prevTests => [...prevTests, newTest]);
-      toast.success("Test created successfully!");
+      toast.success(`Test "${data.title}" created successfully!`);
       setShowQuickCreate(false);
     } catch (error) {
       console.error("Error creating test:", error);
-      toast.error("Failed to create test");
+      toast.error("Failed to create test. Please check your inputs and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -139,15 +145,24 @@ export function useTestManagement() {
   const handleViewTest = (test: Test) => {
     setSelectedTest(test);
     setShowViewTestDialog(true);
+    toast.info(`Loading "${test.title}"...`);
   };
   
   const handleCreateTestClick = () => {
     setShowQuickCreate(!showQuickCreate);
+    if (!showQuickCreate) {
+      toast.info("Create a quick test with a single question");
+    }
   };
 
   const handleCategorySelect = (category: CategoryType) => {
     console.log("Category selected:", category);
     setSelectedCategory(category);
+    if (isAdmin) {
+      toast.info(`Category "${category}" selected. Filter applied.`);
+    } else {
+      toast.info(`Loading ${category} test...`);
+    }
   };
   
   const handleTestComplete = () => {
@@ -155,6 +170,7 @@ export function useTestManagement() {
     if (user) {
       const userSubmissions = getUserTestSubmissions(user.id);
       setSubmissions(userSubmissions);
+      toast.success("Test completed! Your results have been saved.");
     }
   };
 

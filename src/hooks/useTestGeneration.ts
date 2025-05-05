@@ -14,9 +14,15 @@ export const useTestGeneration = () => {
       return questions;
     }
     
-    // Create 50 questions for the test
-    for (let i = 0; i < 50 && i < categoryQuestions.length; i++) {
-      const q = categoryQuestions[i];
+    // Determine how many questions to create (exactly 50, or all available if less than 50)
+    const totalQuestionsToCreate = Math.min(50, categoryQuestions.length);
+    
+    // Create exactly 50 questions for the test (or all available if less than 50)
+    // If there are fewer than 50 questions available, we'll cycle through them
+    for (let i = 0; i < 50; i++) {
+      // Use modulo to cycle through available questions if needed
+      const questionIndex = i % categoryQuestions.length;
+      const q = categoryQuestions[questionIndex];
       
       // Create question object
       const options: Option[] = q.options.map((text, index) => ({

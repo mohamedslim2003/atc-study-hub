@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui-custom/Button';
 import { Course } from '@/types/course';
-import { Loader2, Upload, Eye } from 'lucide-react';
+import { Loader2, Upload, Eye, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui-custom/Card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -24,8 +24,6 @@ export interface CourseFormData {
   content: string;
   category: 'aerodrome' | 'approach' | 'ccr' | 'uncategorized';
   file?: File;
-  fileData?: string;
-  fileType?: string;
 }
 
 const CourseForm: React.FC<CourseFormProps> = ({ 
@@ -35,7 +33,6 @@ const CourseForm: React.FC<CourseFormProps> = ({
   isSubmitting = false
 }) => {
   const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileType, setFileType] = useState<string | null>(null);
 
   const form = useForm<CourseFormData>({
@@ -57,20 +54,9 @@ const CourseForm: React.FC<CourseFormProps> = ({
         category: course.category || 'uncategorized',
       });
       
-      // If there's file data in the course, set up preview
-      if (course.fileData && course.fileType) {
+      // Set file type if course has a file
+      if (course.fileType) {
         setFileType(course.fileType);
-        
-        if (
-          course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-          course.fileType === 'application/msword' ||
-          course.fileType === 'application/pdf'
-        ) {
-          setPreviewUrl(null); // Can't preview directly, but we know it exists
-        } else {
-          // For other file types that can be previewed
-          setPreviewUrl(course.fileData);
-        }
       }
     }
   }, [course, form]);
@@ -78,72 +64,58 @@ const CourseForm: React.FC<CourseFormProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
+      
+      // Check file size (50MB limit)
+      const maxSize = 50 * 1024 * 1024; // 50MB
+      if (selectedFile.size > maxSize) {
+        toast.error("File size must be less than 50MB");
+        return;
+      }
+      
       setFile(selectedFile);
       setFileType(selectedFile.type);
       
-      // Read file content
-      const reader = new FileReader();
-      
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          if (
-            selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-            selectedFile.type === 'application/msword' ||
-            selectedFile.type === 'application/pdf'
-          ) {
-            // For docx, doc, pdf we'll store the raw data but can't preview directly
-            const base64Data = event.target.result.toString();
-            form.setValue('fileData', base64Data);
-            form.setValue('fileType', selectedFile.type);
-            setPreviewUrl(null); // Can't preview directly
-          } else if (selectedFile.type === 'text/plain') {
-            // For text files, we can display the content
+      // For text files, read content and populate the textarea
+      if (selectedFile.type === 'text/plain') {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
             const content = event.target.result.toString();
             form.setValue('content', content);
-            form.setValue('fileData', content);
-            form.setValue('fileType', selectedFile.type);
-            setPreviewUrl(null);
-          } else {
-            toast.error("Unsupported file type");
-            setFile(null);
-            setFileType(null);
           }
-        }
-      };
-      
-      reader.onerror = () => {
-        toast.error("Failed to read file");
-      };
-      
-      if (
-        selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        selectedFile.type === 'application/msword' ||
-        selectedFile.type === 'application/pdf'
-      ) {
-        reader.readAsDataURL(selectedFile);
-      } else if (selectedFile.type === 'text/plain') {
+        };
         reader.readAsText(selectedFile);
       } else {
-        toast.error("Please upload a text, Word document, or PDF file");
-        setFile(null);
-        setFileType(null);
+        toast.success(`${selectedFile.name} selected for upload`);
       }
     }
   };
 
   const handlePreview = () => {
     if (file) {
-      if (
-        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        file.type === 'application/msword' ||
-        file.type === 'application/pdf'
-      ) {
-        // Create a temporary link to open the file
-        const url = URL.createObjectURL(file);
-        window.open(url, '_blank');
-      }
+      const url = URL.createObjectURL(file);
+      window.open(url, '_blank');
+    } else if (course?.fileData) {
+      // For existing course files, open the Supabase URL
+      window.open(course.fileData, '_blank');
     } else {
-      toast.error("No valid file to preview");
+      toast.error("No file to preview");
+    }
+  };
+
+  const handleDownload = () => {
+    if (course?.fileData) {
+      // Create a temporary link to download from Supabase
+      const link = document.createElement('a');
+      link.href = course.fileData;
+      link.download = course.fileName || 'document';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Download started");
+    } else {
+      toast.error("No file available for download");
     }
   };
 
@@ -151,7 +123,6 @@ const CourseForm: React.FC<CourseFormProps> = ({
     console.log("Form submission data:", data);
     if (file) {
       data.file = file;
-      data.fileType = file.type;
     }
     onSubmit(data);
   };
@@ -246,27 +217,38 @@ const CourseForm: React.FC<CourseFormProps> = ({
                 className="max-w-64"
               />
               <p className="text-sm text-muted-foreground">
-                {file ? `File selected: ${file.name}` : 'Upload a .txt, .docx, .doc or .pdf file'}
+                {file ? `New file selected: ${file.name}` : 
+                 course?.fileName ? `Current file: ${course.fileName}` :
+                 'Upload a .txt, .docx, .doc or .pdf file (max 50MB)'}
               </p>
             </div>
             
-            {(file || (course?.fileData && (
-              course?.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-              course?.fileType === 'application/msword' ||
-              course?.fileType === 'application/pdf'
-            ))) && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handlePreview}
-                leftIcon={<Eye className="h-4 w-4" />}
-              >
-                Preview Document
-              </Button>
+            {(file || course?.fileData) && (
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handlePreview}
+                  leftIcon={<Eye className="h-4 w-4" />}
+                >
+                  Preview
+                </Button>
+                
+                {course?.fileData && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleDownload}
+                    leftIcon={<Download className="h-4 w-4" />}
+                  >
+                    Download
+                  </Button>
+                )}
+              </div>
             )}
           </div>
           
-          {/* Show content text area only for plain text */}
+          {/* Show content text area only for plain text or when no file */}
           {(!fileType || fileType === 'text/plain') && (
             <div className="mt-4">
               <FormField
@@ -295,8 +277,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
             <Card className="p-4 mt-4 bg-muted/50">
               <p className="text-center text-muted-foreground">
                 {fileType === 'application/pdf' 
-                  ? 'PDF file content will be saved and can be previewed by clicking the Preview Document button.'
-                  : 'Word document content will be saved and can be previewed by clicking the Preview Document button.'}
+                  ? 'PDF file will be stored in Supabase Storage and available for download.'
+                  : 'Word document will be stored in Supabase Storage and available for download.'}
               </p>
             </Card>
           )}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui-custom/Button';
@@ -8,8 +9,6 @@ import { Separator } from '@/components/ui/separator';
 import { getCourseById } from '@/services/courseService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import DocumentPreview from '@/components/courses/DocumentPreview';
-import { Progress } from '@/components/ui/progress';
 
 const CourseViewPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -17,45 +16,31 @@ const CourseViewPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showPreview, setShowPreview] = useState(false);
-  
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [isDownloading, setIsDownloading] = useState(false);
   
   useEffect(() => {
-    if (courseId) {
-      try {
-        const foundCourse = getCourseById(courseId);
-        
-        if (!foundCourse) {
-          toast.error('Course not found');
+    const loadCourse = async () => {
+      if (courseId) {
+        try {
+          const foundCourse = await getCourseById(courseId);
+          
+          if (!foundCourse) {
+            toast.error('Course not found');
+            navigate('/dashboard/courses');
+            return;
+          }
+          
+          setCourse(foundCourse);
+        } catch (error) {
+          console.error("Error loading course:", error);
+          toast.error('Failed to load course. Please try again.');
           navigate('/dashboard/courses');
-          return;
+        } finally {
+          setLoading(false);
         }
-        
-        setCourse(foundCourse);
-        
-        if (foundCourse.fileDataPlaceholder) {
-          // Alert the user about file data limitations
-          toast.warning(
-            'Due to browser storage limitations, this file is stored with limited preview capabilities.',
-            { duration: 6000 }
-          );
-        } else if (foundCourse.fileStorageError) {
-          // Alert the user about the file storage limitation
-          toast.warning(
-            'This file is large and only partially stored. You can still download the available content.',
-            { duration: 6000 }
-          );
-        }
-      } catch (error) {
-        console.error("Error loading course:", error);
-        toast.error('Failed to load course. Please try again.');
-        navigate('/dashboard/courses');
-      } finally {
-        setLoading(false);
       }
-    }
+    };
+    
+    loadCourse();
   }, [courseId, navigate]);
   
   if (loading) {
@@ -78,130 +63,31 @@ const CourseViewPage: React.FC = () => {
   }
 
   const handleDownloadDocument = () => {
-    // Check if file data exists
     if (!course.fileData) {
-      toast.error('No document data available for download');
+      toast.error('No document available for download');
       return;
     }
     
-    // Warn user about placeholder data
-    if (course.fileDataPlaceholder) {
-      toast.error('The complete file data is not available due to browser storage limitations.');
-      return;
-    }
+    // Create a download link for the Supabase URL
+    const link = document.createElement('a');
+    link.href = course.fileData;
+    link.download = course.fileName || 'document';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     
-    // Start the download process with progress
-    setIsDownloading(true);
-    setDownloadProgress(0);
-    
-    // Simulate download progress
-    const interval = setInterval(() => {
-      setDownloadProgress(prev => {
-        const newProgress = prev + Math.floor(Math.random() * 10) + 5;
-        
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          
-          // Complete the download after progress reaches 100%
-          setTimeout(() => {
-            try {
-              // Create blob from data URI
-              const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
-              const matches = course.fileData.match(dataUriRegex);
-              
-              if (!matches || matches.length !== 3) {
-                throw new Error('Invalid file data format');
-              }
-              
-              const contentType = matches[1];
-              const base64Data = matches[2];
-              
-              // Fix: Clean the base64 string to ensure it's properly formatted
-              const cleanedBase64 = base64Data.replace(/\s/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
-              
-              try {
-                // Convert Base64 to binary in a more reliable way
-                const byteCharacters = atob(cleanedBase64);
-                const byteNumbers = new Array(byteCharacters.length);
-                
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: contentType });
-                
-                // Create a download link for the document
-                const url = URL.createObjectURL(blob);
-                
-                // Set the filename with appropriate extension
-                let fileExtension = 'txt';
-                if (course.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                  fileExtension = 'docx';
-                } else if (course.fileType === 'application/msword') {
-                  fileExtension = 'doc';
-                } else if (course.fileType === 'application/pdf') {
-                  fileExtension = 'pdf';
-                }
-                
-                // Use the provided fileName if available, otherwise create a generic one
-                const downloadName = course.fileName && course.fileName.trim() !== '' 
-                  ? (course.fileName.includes('.') ? course.fileName : `${course.fileName}.${fileExtension}`)
-                  : `${course.title.replace(/\s+/g, '-').toLowerCase()}.${fileExtension}`;
-                
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = downloadName;
-                
-                // Trigger the download
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Cleanup
-                URL.revokeObjectURL(url);
-                
-                toast.success('Download completed successfully');
-              } catch (atobError) {
-                console.error('Download error:', atobError);
-                toast.error('Failed to decode the file. The file data may be corrupted.');
-              }
-            } catch (error) {
-              console.error('Download error:', error);
-              toast.error('Failed to download file. Please try again.');
-            }
-            
-            // Reset download state
-            setIsDownloading(false);
-          }, 500);
-          
-          return 100;
-        }
-        
-        return newProgress;
-      });
-    }, 200);
+    toast.success('Download started');
   };
 
   const togglePreview = () => {
-    // Don't allow preview if we only have a placeholder
-    if (course.fileDataPlaceholder) {
-      toast.warning(
-        'Preview is not available for this file due to browser storage limitations.',
-        { duration: 5000 }
-      );
+    if (!course.fileData) {
+      toast.error('No file available for preview');
       return;
     }
     
-    // Allow preview attempt even with storage error
-    if (course.fileStorageError) {
-      toast.warning(
-        'This file is large and only partially stored. Preview may be incomplete.',
-        { duration: 5000 }
-      );
-    }
-    
-    setShowPreview(!showPreview);
+    // Open the file in a new tab
+    window.open(course.fileData, '_blank');
   };
 
   // Helper function to get appropriate icon and label for different file types
@@ -262,68 +148,28 @@ const CourseViewPage: React.FC = () => {
                   {getFileTypeInfo().icon}
                   <h3 className="text-lg font-medium">{course.fileName || 'Document'}</h3>
                   <p className="text-sm text-muted-foreground">{getFileTypeInfo().label}</p>
-                  {course.fileDataPlaceholder && (
-                    <p className="text-sm text-amber-500 mt-2">
-                      This file exceeds browser storage limits. Download is not available.
-                    </p>
-                  )}
-                  {!course.fileDataPlaceholder && course.fileStorageError && (
-                    <p className="text-sm text-amber-500 mt-2">
-                      This file exceeds browser storage limits. A partial download is still available.
-                    </p>
-                  )}
+                  <p className="text-sm text-green-600 mt-2">
+                    File stored in Supabase Storage - reliable downloads available
+                  </p>
                 </div>
                 
                 <div className="flex flex-wrap gap-3 justify-center">
-                  {!course.fileDataPlaceholder && (
-                    <>
-                      <Button
-                        variant="outline"
-                        onClick={togglePreview}
-                        leftIcon={<Eye className="h-4 w-4" />}
-                      >
-                        {showPreview ? 'Hide Preview' : 'Show Preview'}
-                      </Button>
-                      
-                      <Button
-                        onClick={handleDownloadDocument}
-                        leftIcon={<Download className="h-4 w-4" />}
-                        disabled={isDownloading}
-                      >
-                        {isDownloading ? 'Downloading...' : 'Download'}
-                      </Button>
-                    </>
-                  )}
+                  <Button
+                    variant="outline"
+                    onClick={togglePreview}
+                    leftIcon={<Eye className="h-4 w-4" />}
+                  >
+                    Preview
+                  </Button>
                   
-                  {course.fileDataPlaceholder && (
-                    <div className="text-center px-4 py-2 text-muted-foreground bg-muted rounded">
-                      <p>This file is too large to store in browser storage.</p>
-                      <p className="text-sm mt-1">Try uploading a smaller file or use a server-based solution.</p>
-                    </div>
-                  )}
+                  <Button
+                    onClick={handleDownloadDocument}
+                    leftIcon={<Download className="h-4 w-4" />}
+                  >
+                    Download
+                  </Button>
                 </div>
-                
-                {isDownloading && (
-                  <div className="mt-4 w-full max-w-md">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Downloading...</span>
-                      <span>{downloadProgress}%</span>
-                    </div>
-                    <Progress value={downloadProgress} className="h-2" />
-                  </div>
-                )}
               </div>
-              
-              {showPreview && !course.fileDataPlaceholder && (
-                <div className="mt-6 bg-white rounded-md shadow">
-                  <DocumentPreview 
-                    fileData={course.fileData} 
-                    fileType={course.fileType}
-                    fileName={course.fileName}
-                    hasStorageError={course.fileStorageError}
-                  />
-                </div>
-              )}
             </div>
           ) : (
             <div className="prose max-w-none">

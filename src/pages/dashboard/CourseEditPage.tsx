@@ -15,17 +15,33 @@ const CourseEditPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [course, setCourse] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    if (courseId) {
-      const foundCourse = getCourseById(courseId);
-      setCourse(foundCourse);
-      
-      if (!foundCourse && !isSubmitting) {
-        toast.error('Course not found');
-        navigate('/dashboard/courses');
+    const loadCourse = async () => {
+      if (courseId) {
+        setIsLoading(true);
+        try {
+          const foundCourse = await getCourseById(courseId);
+          setCourse(foundCourse);
+          
+          if (!foundCourse && !isSubmitting) {
+            toast.error('Course not found');
+            navigate('/dashboard/courses');
+          }
+        } catch (error) {
+          console.error('Error loading course:', error);
+          toast.error('Failed to load course');
+          navigate('/dashboard/courses');
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
       }
-    }
+    };
+    
+    loadCourse();
   }, [courseId, navigate, isSubmitting]);
   
   // Redirect non-admin users
@@ -34,7 +50,7 @@ const CourseEditPage: React.FC = () => {
     return null;
   }
 
-  const handleSubmit = (data: CourseFormData) => {
+  const handleSubmit = async (data: CourseFormData) => {
     setIsSubmitting(true);
     
     try {
@@ -47,22 +63,13 @@ const CourseEditPage: React.FC = () => {
         category: data.category,
       };
       
-      // Add file data if present
-      if (data.fileData) {
-        courseData.fileData = data.fileData;
-        courseData.fileType = data.fileType;
-        if (data.file) {
-          courseData.fileName = data.file.name;
-        }
-      }
-      
       if (courseId) {
         // Update existing course
-        updateCourse(courseId, courseData);
+        await updateCourse(courseId, courseData, data.file);
         toast.success('Course updated successfully');
       } else {
         // Create new course
-        addCourse(courseData);
+        await addCourse(courseData, data.file);
         toast.success('Course created successfully');
       }
       navigate('/dashboard/courses');
@@ -73,6 +80,16 @@ const CourseEditPage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="animate-enter">
+        <div className="flex items-center justify-center p-12">
+          <p>Loading course...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-enter">

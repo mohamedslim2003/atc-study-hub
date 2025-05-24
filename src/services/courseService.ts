@@ -1,164 +1,119 @@
+
 import { Course } from '@/types/course';
+import { supabase } from '@/lib/supabase';
 
-// Mock storage in localStorage with compression to handle larger files
-const COURSES_STORAGE_KEY = 'atc_courses';
+// Supabase storage bucket name
+const STORAGE_BUCKET = 'course-files';
 
-// Helper function to get courses from localStorage
-const getStoredCourses = (): Course[] => {
+// Helper function to get courses from Supabase database
+const getStoredCourses = async (): Promise<Course[]> => {
   try {
-    const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
-    if (!storedCourses) return [];
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .order('created_at', { ascending: false });
     
-    let courses = JSON.parse(storedCourses);
-    
-    // Validate the courses array
-    if (!Array.isArray(courses)) {
-      console.warn("Invalid courses data in localStorage, returning empty array");
+    if (error) {
+      console.error("Error fetching courses from Supabase:", error);
       return [];
     }
     
-    // Migrate existing courses to have a category if they don't have one
-    courses = courses.map((course: Course) => {
-      if (!course.category) {
-        return { ...course, category: 'uncategorized' };
-      }
-      return course;
-    });
-    
-    return courses;
+    return data || [];
   } catch (error) {
-    console.error("Error retrieving courses from localStorage:", error);
-    localStorage.removeItem(COURSES_STORAGE_KEY); // Clear corrupted data
+    console.error("Error retrieving courses:", error);
     return [];
   }
 };
 
-// Helper function to save courses to localStorage with better handling for large files
-const saveCourses = (courses: Course[]) => {
+// Helper function to upload file to Supabase Storage
+const uploadFileToStorage = async (file: File, courseId: string): Promise<string | null> => {
   try {
-    if (!Array.isArray(courses)) {
-      console.error("Attempted to save invalid courses data (not an array)");
-      return false;
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${courseId}.${fileExt}`;
+    const filePath = `courses/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error("Error uploading file:", uploadError);
+      return null;
     }
-    
-    // Create a copy of the courses with potentially truncated file data to fit in localStorage
-    const processedCourses = courses.map(course => {
-      // Ensure all courses have a category
-      const courseWithCategory = { 
-        ...course, 
-        category: course.category || 'uncategorized' 
-      };
-      
-      // For files, verify the data URI format before storing
-      if (courseWithCategory.fileData) {
-        const dataUriRegex = /^data:([a-z]+\/[a-z0-9-+.]+);base64,(.+)$/i;
-        const isValidDataUri = dataUriRegex.test(courseWithCategory.fileData);
-        
-        // If it's not a valid data URI and not already a placeholder, log an error
-        if (!isValidDataUri && !courseWithCategory.fileDataPlaceholder) {
-          console.warn(`Course "${course.title}" has invalid file data format. Storing metadata only.`);
-          return {
-            ...courseWithCategory,
-            fileDataPlaceholder: true,
-            originalFileSize: course.fileData?.length || 0,
-            fileData: null
-          };
-        }
-        
-        // If file is large, store metadata only
-        if (courseWithCategory.fileData.length > 10000) {
-          console.log(`Course "${course.title}" has a large file (${course.fileData?.length} bytes), storing metadata only`);
-          
-          // Extract just the content type from the data URI if possible
-          let contentType = '';
-          if (isValidDataUri) {
-            const matches = courseWithCategory.fileData.match(dataUriRegex);
-            if (matches && matches.length > 1) {
-              contentType = matches[1];
-            }
-          }
-          
-          // Store only file metadata and a flag indicating this is a placeholder
-          return {
-            ...courseWithCategory,
-            fileDataPlaceholder: true,
-            originalFileSize: course.fileData?.length || 0,
-            // Keep just the content type portion of the data URI
-            fileData: isValidDataUri ? 
-              `data:${contentType};base64,TRUNCATED_FOR_STORAGE` : 
-              'INVALID_FORMAT_TRUNCATED'
-          };
-        }
-      }
-      return courseWithCategory;
-    });
-    
-    localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(processedCourses));
-    return true;
+
+    // Get public URL
+    const { data } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
   } catch (error) {
-    console.error("Error saving courses to localStorage:", error);
-    throw new Error("Failed to save course. Storage limit reached.");
+    console.error("Error in file upload:", error);
+    return null;
   }
 };
 
-// In-memory cache for file data that's too large for localStorage
-const fileDataCache = new Map<string, string>();
-
-export const getCourses = (): Course[] => {
+// Helper function to delete file from Supabase Storage
+const deleteFileFromStorage = async (fileUrl: string): Promise<boolean> => {
   try {
-    return getStoredCourses();
+    // Extract file path from URL
+    const urlParts = fileUrl.split('/');
+    const filePath = urlParts.slice(-2).join('/'); // Get "courses/filename.ext"
+
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .remove([filePath]);
+
+    if (error) {
+      console.error("Error deleting file:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in file deletion:", error);
+    return false;
+  }
+};
+
+export const getCourses = async (): Promise<Course[]> => {
+  try {
+    return await getStoredCourses();
   } catch (error) {
     console.error("Error getting courses:", error);
     return [];
   }
 };
 
-export const getCourseById = (id: string): Course | undefined => {
+export const getCourseById = async (id: string): Promise<Course | undefined> => {
   try {
     if (!id) {
       console.error("Invalid course ID (empty)");
       return undefined;
     }
     
-    const courses = getStoredCourses();
-    const course = courses.find(course => course.id === id);
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', id)
+      .single();
     
-    if (!course) {
+    if (error) {
+      console.error(`Error getting course with ID ${id}:`, error);
       return undefined;
     }
     
-    // Check if we have the file data in our cache
-    if (course.fileDataPlaceholder && fileDataCache.has(id)) {
-      return {
-        ...course,
-        fileData: fileDataCache.get(id),
-        fileDataPlaceholder: false
-      };
-    }
-    
-    // Validate file data if present
-    if (course.fileData) {
-      const isDataUri = course.fileData.startsWith('data:');
-      if (!isDataUri && !course.fileDataPlaceholder) {
-        console.warn(`Invalid file data format for course "${course.title}"`);
-        return {
-          ...course,
-          fileData: null,
-          fileStorageError: true
-        };
-      }
-    }
-    
-    return course;
+    return data;
   } catch (error) {
     console.error(`Error getting course with ID ${id}:`, error);
     return undefined;
   }
 };
 
-export const addCourse = (course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>): Course => {
-  const courses = getStoredCourses();
-  
+export const addCourse = async (course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>, file?: File): Promise<Course> => {
   const newId = crypto.randomUUID();
   
   const newCourse: Course = {
@@ -169,17 +124,40 @@ export const addCourse = (course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>
     updatedAt: new Date(),
   };
   
-  // Store full file data in our cache if it's large
-  if (newCourse.fileData && newCourse.fileData.length > 10000) {
-    fileDataCache.set(newId, newCourse.fileData);
-  }
-  
   try {
-    // Check if we can actually save this to localStorage before adding
-    const testCourses = [...courses, newCourse];
-    saveCourses(testCourses);
+    // Upload file to Supabase Storage if provided
+    if (file) {
+      const fileUrl = await uploadFileToStorage(file, newId);
+      if (fileUrl) {
+        newCourse.fileData = fileUrl;
+        newCourse.fileType = file.type;
+        newCourse.fileName = file.name;
+      }
+    }
     
-    // If no error was thrown, return the new course
+    // Save course to database
+    const { data, error } = await supabase
+      .from('courses')
+      .insert([{
+        id: newCourse.id,
+        title: newCourse.title,
+        description: newCourse.description,
+        content: newCourse.content,
+        category: newCourse.category,
+        file_data: newCourse.fileData,
+        file_type: newCourse.fileType,
+        file_name: newCourse.fileName,
+        created_at: newCourse.createdAt,
+        updated_at: newCourse.updatedAt
+      }])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Failed to add course:", error);
+      throw new Error("Failed to save course to database");
+    }
+    
     return newCourse;
   } catch (error) {
     console.error("Failed to add course:", error);
@@ -187,29 +165,57 @@ export const addCourse = (course: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>
   }
 };
 
-export const updateCourse = (id: string, course: Partial<Course>): Course | null => {
-  const courses = getStoredCourses();
-  const courseIndex = courses.findIndex(c => c.id === id);
-  
-  if (courseIndex === -1) {
-    return null;
-  }
-  
-  const updatedCourse = {
-    ...courses[courseIndex],
-    ...course,
-    updatedAt: new Date(),
-  };
-  
-  // If file data is provided, update our cache
-  if (course.fileData && course.fileData.length > 10000) {
-    fileDataCache.set(id, course.fileData);
-  }
-  
-  courses[courseIndex] = updatedCourse;
-  
+export const updateCourse = async (id: string, course: Partial<Course>, file?: File): Promise<Course | null> => {
   try {
-    saveCourses(courses);
+    const existingCourse = await getCourseById(id);
+    if (!existingCourse) {
+      return null;
+    }
+    
+    const updatedCourse = {
+      ...existingCourse,
+      ...course,
+      updatedAt: new Date(),
+    };
+    
+    // Handle file upload if new file provided
+    if (file) {
+      // Delete old file if exists
+      if (existingCourse.fileData) {
+        await deleteFileFromStorage(existingCourse.fileData);
+      }
+      
+      // Upload new file
+      const fileUrl = await uploadFileToStorage(file, id);
+      if (fileUrl) {
+        updatedCourse.fileData = fileUrl;
+        updatedCourse.fileType = file.type;
+        updatedCourse.fileName = file.name;
+      }
+    }
+    
+    // Update course in database
+    const { data, error } = await supabase
+      .from('courses')
+      .update({
+        title: updatedCourse.title,
+        description: updatedCourse.description,
+        content: updatedCourse.content,
+        category: updatedCourse.category,
+        file_data: updatedCourse.fileData,
+        file_type: updatedCourse.fileType,
+        file_name: updatedCourse.fileName,
+        updated_at: updatedCourse.updatedAt
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Failed to update course:", error);
+      throw new Error("Failed to update course in database");
+    }
+    
     return updatedCourse;
   } catch (error) {
     console.error("Failed to update course:", error);
@@ -217,21 +223,27 @@ export const updateCourse = (id: string, course: Partial<Course>): Course | null
   }
 };
 
-export const deleteCourse = (id: string): boolean => {
-  const courses = getStoredCourses();
-  const filteredCourses = courses.filter(course => course.id !== id);
-  
-  if (filteredCourses.length === courses.length) {
-    return false;
-  }
-  
-  // Remove from file cache if it exists
-  if (fileDataCache.has(id)) {
-    fileDataCache.delete(id);
-  }
-  
+export const deleteCourse = async (id: string): Promise<boolean> => {
   try {
-    saveCourses(filteredCourses);
+    // Get course to delete associated file
+    const course = await getCourseById(id);
+    
+    // Delete file from storage if exists
+    if (course?.fileData) {
+      await deleteFileFromStorage(course.fileData);
+    }
+    
+    // Delete course from database
+    const { error } = await supabase
+      .from('courses')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error(`Failed to delete course with ID ${id}:`, error);
+      return false;
+    }
+    
     return true;
   } catch (error) {
     console.error(`Failed to delete course with ID ${id}:`, error);

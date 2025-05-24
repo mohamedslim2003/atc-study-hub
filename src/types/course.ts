@@ -6,12 +6,9 @@ export interface Course {
   content: string;
   category: 'aerodrome' | 'approach' | 'ccr' | 'uncategorized';
   imageUrl?: string;
-  fileData?: string;
+  fileData?: string; // Now stores Supabase Storage URL
   fileType?: string;
   fileName?: string;
-  fileStorageError?: boolean;
-  fileDataPlaceholder?: boolean;
-  originalFileSize?: number;
   createdAt: Date;
   updatedAt: Date;
 }

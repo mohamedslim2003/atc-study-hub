@@ -8,7 +8,7 @@ const STORAGE_BUCKET = 'course-files';
 // Helper function to get courses from Supabase database
 const getStoredCourses = async (): Promise<Course[]> => {
   try {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('courses')
       .select('*')
       .order('created_at', { ascending: false });
@@ -107,7 +107,7 @@ export const getCourseById = async (id: string): Promise<Course | undefined> => 
       return undefined;
     }
     
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('courses')
       .select('*')
       .eq('id', id)
@@ -164,7 +164,7 @@ export const addCourse = async (course: Omit<Course, 'id' | 'createdAt' | 'updat
     }
     
     // Save course to database with proper field mapping
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('courses')
       .insert([{
         id: newCourse.id,
@@ -223,7 +223,7 @@ export const updateCourse = async (id: string, course: Partial<Course>, file?: F
     }
     
     // Update course in database with proper field mapping
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('courses')
       .update({
         title: updatedCourse.title,
@@ -262,7 +262,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
     }
     
     // Delete course from database
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('courses')
       .delete()
       .eq('id', id);

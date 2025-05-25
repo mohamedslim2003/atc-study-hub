@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
@@ -24,9 +25,9 @@ const CoursesPage: React.FC = () => {
     loadCourses();
   }, []);
   
-  const loadCourses = () => {
+  const loadCourses = async () => {
     try {
-      const allCourses = getCourses();
+      const allCourses = await getCourses();
       setCourses(allCourses || []);
     } catch (error) {
       console.error("Error loading courses:", error);

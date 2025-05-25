@@ -19,9 +19,9 @@ const CourseDocumentSelector: React.FC<CourseDocumentSelectorProps> = ({ onDocum
   
   // Fetch courses with documents
   useEffect(() => {
-    const fetchCourses = () => {
+    const fetchCourses = async () => {
       try {
-        const allCourses = getCourses();
+        const allCourses = await getCourses();
         // Filter courses that have file documents
         const coursesWithDocs = allCourses.filter(course => 
           course.fileData && course.fileName && course.fileType

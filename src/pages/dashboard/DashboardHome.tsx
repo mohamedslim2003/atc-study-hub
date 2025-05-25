@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { Button } from '@/components/ui-custom/Button';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,7 +11,21 @@ import { getCourses } from '@/services/courseService';
 const DashboardHome: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const courses = getCourses();
+  const [courses, setCourses] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const allCourses = await getCourses();
+        setCourses(allCourses);
+      } catch (error) {
+        console.error("Error loading courses:", error);
+        setCourses([]);
+      }
+    };
+    
+    loadCourses();
+  }, []);
 
   // Get time of day for greeting
   const getTimeOfDay = () => {

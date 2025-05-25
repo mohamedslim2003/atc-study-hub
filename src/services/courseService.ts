@@ -1,6 +1,6 @@
 
 import { Course } from '@/types/course';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Supabase storage bucket name
 const STORAGE_BUCKET = 'course-files';
@@ -18,7 +18,19 @@ const getStoredCourses = async (): Promise<Course[]> => {
       return [];
     }
     
-    return data || [];
+    // Map database fields to Course interface
+    return (data || []).map(course => ({
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      content: course.content || '',
+      category: course.category,
+      fileData: course.file_data,
+      fileType: course.file_type,
+      fileName: course.file_name,
+      createdAt: new Date(course.created_at),
+      updatedAt: new Date(course.updated_at)
+    }));
   } catch (error) {
     console.error("Error retrieving courses:", error);
     return [];
@@ -106,7 +118,19 @@ export const getCourseById = async (id: string): Promise<Course | undefined> => 
       return undefined;
     }
     
-    return data;
+    // Map database fields to Course interface
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      content: data.content || '',
+      category: data.category,
+      fileData: data.file_data,
+      fileType: data.file_type,
+      fileName: data.file_name,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
   } catch (error) {
     console.error(`Error getting course with ID ${id}:`, error);
     return undefined;
@@ -135,7 +159,7 @@ export const addCourse = async (course: Omit<Course, 'id' | 'createdAt' | 'updat
       }
     }
     
-    // Save course to database
+    // Save course to database with proper field mapping
     const { data, error } = await supabase
       .from('courses')
       .insert([{
@@ -147,8 +171,8 @@ export const addCourse = async (course: Omit<Course, 'id' | 'createdAt' | 'updat
         file_data: newCourse.fileData,
         file_type: newCourse.fileType,
         file_name: newCourse.fileName,
-        created_at: newCourse.createdAt,
-        updated_at: newCourse.updatedAt
+        created_at: newCourse.createdAt.toISOString(),
+        updated_at: newCourse.updatedAt.toISOString()
       }])
       .select()
       .single();
@@ -194,7 +218,7 @@ export const updateCourse = async (id: string, course: Partial<Course>, file?: F
       }
     }
     
-    // Update course in database
+    // Update course in database with proper field mapping
     const { data, error } = await supabase
       .from('courses')
       .update({
@@ -205,7 +229,7 @@ export const updateCourse = async (id: string, course: Partial<Course>, file?: F
         file_data: updatedCourse.fileData,
         file_type: updatedCourse.fileType,
         file_name: updatedCourse.fileName,
-        updated_at: updatedCourse.updatedAt
+        updated_at: updatedCourse.updatedAt.toISOString()
       })
       .eq('id', id)
       .select()
